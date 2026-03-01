@@ -2,1394 +2,1181 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VHS SEGMENTOR</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APEX">
+<meta name="theme-color" content="#2d5a3d">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>APEX</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:       #090a0c;
-  --bg2:      #0d0f14;
-  --bg3:      #131720;
-  --panel:    #111418;
-  --border:   #1c2330;
-  --border2:  #263040;
-  --green:    #00e5a0;
-  --green2:   #00b07a;
-  --green-g:  rgba(0,229,160,0.12);
-  --amber:    #ffb930;
-  --amber-g:  rgba(255,185,48,0.12);
-  --red:      #ff3b5c;
-  --blue:     #4da6ff;
-  --text:     #c0d0e0;
-  --text-dim: #506070;
-  --text-hi:  #e8f4ff;
-  --marker-in:  #00e5a0;
-  --marker-out: #ff3b5c;
-  --marker-cut: #ffb930;
-}
+:root{--a:#2d5a3d;--al:#3a7a52;--ad:rgba(45,90,61,.15);--bg:#0e1117;--c1:#161b22;--c2:#1c2333;--b:#252d3a;--t:#e6edf3;--t2:#8b949e;--r:#c9453a;--w:#d4a037}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--t);font-family:'DM Sans',system-ui,sans-serif}
+input,select,textarea{font-family:inherit;outline:none;background:var(--c2);border:1px solid var(--b);border-radius:8px;padding:10px 12px;color:var(--t);font-size:14px;width:100%;box-sizing:border-box}
+input:focus,select:focus,textarea:focus{border-color:var(--al)}
+button{font-family:inherit;cursor:pointer;border:none}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.app{max-width:480px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative}
+.screen{flex:1;overflow-y:auto;padding-bottom:8px;display:none}.screen.active{display:block}
+.tab-bar{display:flex;border-top:1px solid var(--b);background:#0d1015;padding:6px 0;padding-bottom:max(6px,env(safe-area-inset-bottom));flex-shrink:0;z-index:50}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;background:none;color:var(--t2);font-size:10px;font-weight:500;transition:color .2s;position:relative}
+.tab-btn.active{color:var(--al);font-weight:700}
+.tab-btn .dot{width:6px;height:6px;border-radius:3px;background:var(--r);position:absolute;top:2px;right:calc(50% - 14px);display:none}
+.tab-btn.has-session .dot{display:block}
+.top-bar{padding:16px 16px 8px;position:sticky;top:0;background:var(--bg);z-index:20}
+.card{background:var(--c1);border-radius:12px;padding:16px;border:1px solid var(--b);margin-bottom:8px}
+.card-flush{background:var(--c1);border-radius:12px;border:1px solid var(--b);overflow:hidden;margin-bottom:10px}
+.btn{background:var(--a);color:#fff;border-radius:10px;padding:12px 20px;font-weight:700;font-size:14px;width:100%;transition:opacity .2s}
+.btn:disabled{opacity:.4}
+.btn-sm{background:var(--ad);color:var(--al);border-radius:8px;padding:8px 14px;font-weight:600;font-size:12px}
+.btn-danger{background:rgba(201,69,58,.13);color:var(--r)}
+.badge{background:var(--ad);color:var(--al);font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;display:inline-block}
+.label{font-size:11px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.h1{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.h2{font-size:17px;font-weight:700}
+.h3{font-size:14px;font-weight:700}
+.mono{font-family:'JetBrains Mono',monospace}
+.row{display:flex;align-items:center;gap:10px}
+.divider{height:1px;background:var(--b);margin:12px 0}
+.muted{color:var(--t2);font-size:13px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal-inner{background:var(--c1);border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;animation:slideUp .25s ease-out}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{text-align:center;padding:12px}.stat-val{font-size:22px;font-weight:800;margin-top:4px}.stat-label{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px}
+.routine-card{cursor:pointer;border-left:3px solid var(--a)}.routine-card:active{opacity:.8}
+.set-row{display:grid;grid-template-columns:32px 1fr 1fr 44px;gap:6px;align-items:center;padding:3px 0}
+.set-header{font-size:10px;color:var(--t2);font-weight:600;text-transform:uppercase;padding:8px 0 4px}
+.check-btn{width:36px;height:36px;border-radius:8px;border:2px solid var(--b);background:transparent;display:flex;align-items:center;justify-content:center}
+.check-btn.done{border-color:var(--al);background:var(--a)}
+.chat-bubble{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;white-space:pre-wrap}
+.chat-user{background:var(--a);border-bottom-right-radius:4px}
+.chat-assistant{background:var(--c2);border-bottom-left-radius:4px}
+.import-zone{text-align:center;cursor:pointer;padding:24px;border:1px dashed var(--a);background:var(--ad);border-radius:12px}
+.color-dot{width:28px;height:28px;border-radius:8px;cursor:pointer;border:2px solid transparent;flex-shrink:0}
+.color-dot.sel{border-color:#fff}
+.ex-pill{padding:6px 0;border-bottom:1px solid var(--b)}.ex-pill:last-child{border-bottom:none}
+.progress-bar{height:3px;background:var(--b);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width .3s}
+.loading-dots{display:flex;justify-content:center;gap:4px;padding:12px}
+.loading-dots span{width:8px;height:8px;border-radius:4px;background:var(--al)}
+.loading-dots span:nth-child(1){animation:pulse 1s ease-in-out 0s infinite}
+.loading-dots span:nth-child(2){animation:pulse 1s ease-in-out .15s infinite}
+.loading-dots span:nth-child(3){animation:pulse 1s ease-in-out .3s infinite}
+.api-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:6px}
+.api-on{background:var(--ad);color:var(--al)}.api-off{background:rgba(201,69,58,.1);color:var(--r)}
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 13px;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* Scanline overlay */
-body::after {
-  content: '';
-  position: fixed; inset: 0;
-  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
-  pointer-events: none;
-  z-index: 9999;
-}
-
-/* ── LAYOUT ── */
-.shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* ── HEADER ── */
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  background: var(--bg2);
-}
-
-.logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 28px;
-  letter-spacing: 5px;
-  color: var(--green);
-  text-shadow: 0 0 20px rgba(0,229,160,0.4);
-}
-.logo span {
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
-  margin-left: 12px;
-  vertical-align: middle;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* Turbo */
-.turbo-wrap { display: flex; align-items: center; gap: 8px; }
-.turbo-lbl {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 16px;
-  letter-spacing: 2px;
-  color: var(--text-dim);
-  transition: color .3s;
-}
-.turbo-lbl.on { color: var(--amber); text-shadow: 0 0 10px var(--amber); }
-.sw { position: relative; width: 44px; height: 22px; }
-.sw input { display: none; }
-.sw-track {
-  position: absolute; inset: 0;
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: 22px;
-  cursor: pointer;
-  transition: all .3s;
-}
-.sw-track::before {
-  content: '';
-  position: absolute;
-  width: 14px; height: 14px;
-  left: 3px; top: 3px;
-  background: var(--text-dim);
-  border-radius: 50%;
-  transition: all .3s;
-}
-.sw input:checked + .sw-track {
-  background: rgba(255,185,48,.15);
-  border-color: var(--amber);
-  box-shadow: 0 0 10px rgba(255,185,48,.25);
-}
-.sw input:checked + .sw-track::before {
-  transform: translateX(22px);
-  background: var(--amber);
-}
-
-/* ── MAIN SPLIT ── */
-.main {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* ── LEFT: VIDEO + TIMELINE ── */
-.left-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-right: 1px solid var(--border);
-}
-
-/* DROP ZONE — shown before upload */
-#drop-zone {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: 2px dashed var(--border2);
-  margin: 20px;
-  border-radius: 4px;
-  background: var(--panel);
-  transition: all .3s;
-  gap: 14px;
-}
-#drop-zone:hover, #drop-zone.over {
-  border-color: var(--green);
-  background: rgba(0,229,160,.03);
-  box-shadow: inset 0 0 40px rgba(0,229,160,.04);
-}
-.dz-icon { color: var(--green2); filter: drop-shadow(0 0 10px var(--green2)); }
-.dz-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 28px;
-  letter-spacing: 5px;
-  color: var(--text-hi);
-}
-.dz-sub { color: var(--text-dim); font-size: 12px; letter-spacing: 1px; }
-.dz-formats { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
-.dz-fmt {
-  padding: 2px 8px;
-  border: 1px solid var(--border2);
-  border-radius: 2px;
-  font-size: 10px;
-  color: var(--text-dim);
-  letter-spacing: 1px;
-}
-#file-input { display: none; }
-
-/* UPLOAD PROGRESS */
-#upload-progress {
-  display: none;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 40px;
-}
-.up-name { font-family: 'Share Tech Mono', monospace; color: var(--text-hi); font-size: 14px; }
-.up-bar { width: 100%; max-width: 400px; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.up-fill { height: 100%; background: var(--green); width: 0%; transition: width .2s; box-shadow: 0 0 8px var(--green); }
-.up-pct { color: var(--green); font-family: 'Bebas Neue', sans-serif; font-size: 32px; }
-
-/* VIDEO PLAYER */
-#player-wrap {
-  display: none;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-.video-container {
-  flex: 1;
-  background: #000;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-}
-
-#vid {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  display: block;
-  cursor: pointer;
-}
-
-/* Play overlay */
-.play-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .2s;
-}
-.play-overlay.show { opacity: 1; }
-.play-circle {
-  width: 64px; height: 64px;
-  background: rgba(0,0,0,.6);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  border: 2px solid rgba(255,255,255,.3);
-}
-
-/* ── TRANSPORT BAR ── */
-.transport {
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.tc {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 14px;
-  color: var(--green);
-  min-width: 90px;
-  text-align: center;
-  letter-spacing: 1px;
-}
-
-.transport-btns { display: flex; gap: 6px; align-items: center; }
-
-.tbtn {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: 3px;
-  color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  letter-spacing: .5px;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: all .15s;
-  white-space: nowrap;
-}
-.tbtn:hover { border-color: var(--text-dim); color: var(--text-hi); }
-
-.tbtn-play {
-  background: rgba(0,229,160,.1);
-  border-color: var(--green2);
-  color: var(--green);
-  width: 36px;
-  padding: 6px;
-  text-align: center;
-  font-size: 14px;
-}
-.tbtn-play:hover { background: rgba(0,229,160,.2); border-color: var(--green); }
-
-.tbtn-cut {
-  background: rgba(255,185,48,.1);
-  border-color: var(--amber);
-  color: var(--amber);
-  font-size: 12px;
-  letter-spacing: 1px;
-}
-.tbtn-cut:hover { background: rgba(255,185,48,.2); box-shadow: 0 0 12px rgba(255,185,48,.2); }
-
-.speed-select {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: 3px;
-  color: var(--text-dim);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  padding: 5px 6px;
-  cursor: pointer;
-  outline: none;
-}
-
-.vol-slider {
-  width: 70px;
-  accent-color: var(--green);
-  cursor: pointer;
-}
-
-/* ── TIMELINE ── */
-.timeline-wrap {
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
-  padding: 12px 16px 10px;
-  flex-shrink: 0;
-}
-
-.timeline-label {
-  font-size: 10px;
-  color: var(--text-dim);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-#timeline {
-  position: relative;
-  height: 48px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  cursor: crosshair;
-  overflow: hidden;
-  user-select: none;
-}
-
-/* Segment fills on timeline */
-.tl-segment {
-  position: absolute;
-  top: 0; bottom: 0;
-  background: rgba(0,229,160,.12);
-  border-left: 2px solid var(--green);
-  border-right: 2px solid var(--marker-out);
-  pointer-events: none;
-  transition: background .2s;
-}
-.tl-segment:hover { background: rgba(0,229,160,.2); }
-.tl-segment.active { background: rgba(0,229,160,.22); }
-
-/* Playhead */
-#playhead {
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 2px;
-  background: #fff;
-  pointer-events: none;
-  box-shadow: 0 0 6px rgba(255,255,255,.5);
-  left: 0;
-  z-index: 10;
-}
-#playhead::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -4px;
-  width: 0; height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 8px solid #fff;
-}
-
-/* Cut markers on timeline */
-.tl-marker {
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 2px;
-  pointer-events: none;
-}
-.tl-marker.cut { background: var(--marker-cut); box-shadow: 0 0 4px var(--marker-cut); }
-
-/* Timecode ticks */
-.tl-tick {
-  position: absolute;
-  top: 0;
-  width: 1px;
-  background: var(--border2);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 9px;
-  color: var(--text-dim);
-}
-.tl-tick-label {
-  position: absolute;
-  top: 2px;
-  left: 3px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 9px;
-  color: var(--text-dim);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-/* ── KEYBOARD HINTS ── */
-.kbd-hints {
-  display: flex;
-  gap: 14px;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-.kbd-hint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10px;
-  color: var(--text-dim);
-}
-kbd {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: 3px;
-  padding: 1px 5px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  color: var(--text);
-}
-
-/* ── RIGHT PANEL: SEGMENTS ── */
-.right-col {
-  width: 340px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg2);
-  overflow: hidden;
-}
-
-.panel-header {
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.panel-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 18px;
-  letter-spacing: 3px;
-  color: var(--text-hi);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.seg-badge {
-  background: var(--green);
-  color: #000;
-  font-size: 11px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 10px;
-  min-width: 22px;
-  text-align: center;
-}
-
-.segments-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-}
-.segments-scroll::-webkit-scrollbar { width: 4px; }
-.segments-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-/* Segment card */
-.seg-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  margin-bottom: 6px;
-  overflow: hidden;
-  transition: all .2s;
-  cursor: pointer;
-}
-.seg-card:hover { border-color: rgba(0,229,160,.3); }
-.seg-card.active-seg { border-color: var(--green); background: rgba(0,229,160,.04); }
-.seg-card.deselected { opacity: .45; }
-
-.seg-card-top {
-  display: flex;
-  align-items: center;
-  padding: 8px 10px;
-  gap: 8px;
-}
-
-.seg-num {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px;
-  color: var(--text-dim);
-  line-height: 1;
-  min-width: 28px;
-}
-.seg-card.active-seg .seg-num { color: var(--green); }
-
-.seg-meta { flex: 1; min-width: 0; }
-
-.seg-name-input {
-  width: 100%;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid transparent;
-  color: var(--text-hi);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  outline: none;
-  padding: 1px 0;
-  transition: border-color .2s;
-  letter-spacing: .3px;
-}
-.seg-name-input:focus { border-bottom-color: var(--green); }
-.seg-name-input::placeholder { color: var(--text-dim); font-weight: 400; }
-
-.seg-tc-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  margin-top: 3px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  color: var(--text-dim);
-}
-.seg-tc-in  { color: var(--green2); }
-.seg-tc-out { color: #ff6680; }
-.seg-dur    { margin-left: auto; color: var(--amber); }
-
-.seg-card-actions {
-  display: flex;
-  border-top: 1px solid var(--border);
-}
-.seg-act-btn {
-  flex: 1;
-  padding: 5px;
-  background: transparent;
-  border: none;
-  border-right: 1px solid var(--border);
-  color: var(--text-dim);
-  font-size: 11px;
-  cursor: pointer;
-  font-family: 'IBM Plex Mono', monospace;
-  transition: all .15s;
-  letter-spacing: .5px;
-}
-.seg-act-btn:last-child { border-right: none; }
-.seg-act-btn:hover { background: var(--bg3); color: var(--text-hi); }
-.seg-act-btn.del:hover { color: var(--red); }
-.seg-act-btn.go:hover  { color: var(--green); }
-
-/* Check box */
-.seg-check {
-  width: 20px; height: 20px;
-  border: 1.5px solid var(--border2);
-  border-radius: 2px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: all .15s;
-}
-.seg-check.on { background: var(--green); border-color: var(--green); }
-.seg-check svg { opacity: 0; transition: opacity .15s; }
-.seg-check.on svg { opacity: 1; }
-
-/* Empty state */
-.seg-empty {
-  padding: 40px 20px;
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 12px;
-  line-height: 1.8;
-}
-.seg-empty-icon { font-size: 32px; margin-bottom: 12px; opacity: .4; }
-
-/* ── EXPORT FOOTER ── */
-.export-footer {
-  border-top: 1px solid var(--border);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  background: var(--bg);
-}
-
-.export-row { display: flex; gap: 8px; }
-
-.btn {
-  padding: 9px 16px;
-  border-radius: 3px;
-  border: 1px solid var(--border2);
-  background: var(--bg3);
-  color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all .2s;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.btn:hover { border-color: var(--text-dim); color: var(--text-hi); }
-.btn:disabled { opacity: .35; cursor: not-allowed; }
-
-.btn-export {
-  flex: 1;
-  background: var(--green);
-  color: #000;
-  border-color: var(--green);
-  font-weight: 600;
-  font-size: 12px;
-  box-shadow: 0 0 16px rgba(0,229,160,.25);
-}
-.btn-export:hover:not(:disabled) {
-  background: #00ffc0;
-  box-shadow: 0 0 24px rgba(0,229,160,.4);
-  color: #000;
-}
-
-.btn-clear { color: var(--red); border-color: rgba(255,59,92,.3); font-size: 11px; padding: 9px 12px; }
-.btn-clear:hover { background: rgba(255,59,92,.08); border-color: var(--red); color: var(--red); }
-
-/* Export progress */
-#export-status {
-  font-size: 11px;
-  color: var(--text-dim);
-  font-family: 'Share Tech Mono', monospace;
-  min-height: 16px;
-  text-align: center;
-}
-
-/* Export results */
-#export-results {
-  display: none;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 120px;
-  overflow-y: auto;
-}
-.exp-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
-  background: var(--bg3);
-  border-radius: 2px;
-  font-size: 10px;
-  font-family: 'Share Tech Mono', monospace;
-}
-.exp-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.exp-dot.ok  { background: var(--green); }
-.exp-dot.err { background: var(--red); }
-.exp-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-.exp-size { color: var(--text-dim); flex-shrink: 0; }
-
-/* ── TOAST ── */
-#toast {
-  position: fixed;
-  bottom: 20px; left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: var(--panel);
-  border: 1px solid var(--border2);
-  border-radius: 4px;
-  padding: 10px 20px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 12px;
-  color: var(--text-hi);
-  opacity: 0;
-  transition: all .3s;
-  pointer-events: none;
-  z-index: 10000;
-  white-space: nowrap;
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-#toast.green { border-color: var(--green2); }
-#toast.amber { border-color: var(--amber); }
-#toast.red   { border-color: var(--red); color: var(--red); }
-
-/* ── HOVER TIMECODE on timeline ── */
-#tl-hover-tc {
-  position: absolute;
-  top: 2px;
-  background: rgba(0,0,0,.8);
-  border: 1px solid var(--border2);
-  border-radius: 2px;
-  padding: 1px 5px;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 10px;
-  color: var(--text-hi);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .1s;
-  z-index: 20;
-}
+/* ─── LIVE SESSION v2 STYLES ──────────────────────────────────── */
+.ls-card{background:var(--c1);border:1px solid var(--b);border-radius:14px;margin-bottom:10px;overflow:visible}
+.ls-card-head{padding:14px 14px 10px;display:flex;justify-content:space-between;align-items:flex-start}
+.ls-ex-name{font-size:16px;font-weight:700;cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.12)}
+.ls-ex-name:hover{color:var(--al)}
+.ls-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px}
+.ls-type-badge{font-size:10px;font-weight:700;letter-spacing:.8px;padding:2px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace}
+.ls-rest-badge{font-size:11px;color:var(--t2);font-family:'JetBrains Mono',monospace}
+.ls-add-rest{font-size:11px;color:var(--al);cursor:pointer;font-weight:600;font-family:'JetBrains Mono',monospace}
+.ls-pill{display:flex;align-items:baseline;gap:2px;padding:3px 8px;background:var(--ad);border-radius:8px;flex-shrink:0}
+.ls-pill-n{font-size:17px;font-weight:700;color:var(--al);font-family:'JetBrains Mono',monospace}
+.ls-pill-s{font-size:13px;color:rgba(255,255,255,.2);font-family:'JetBrains Mono',monospace}
+.ls-pill-d{font-size:13px;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace}
+.ls-sets{padding:0 10px 10px}
+.ls-set-hdr{display:flex;gap:10px;padding:0 8px 5px;align-items:center}
+.ls-set-hdr span{font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.25);font-family:'JetBrains Mono',monospace}
+.ls-srow-wrap{position:relative;border-radius:8px;margin-bottom:3px;overflow:hidden}
+.ls-srow{display:flex;gap:10px;padding:7px 8px;align-items:center;border-radius:8px;background:rgba(255,255,255,.02);position:relative;z-index:2;transition:transform .2s ease}
+.ls-srow.done{opacity:.4}
+.ls-snum{width:24px;font-size:13px;font-weight:600;color:rgba(255,255,255,.3);font-family:'JetBrains Mono',monospace;text-align:center;flex-shrink:0}
+.ls-sinput{display:block;width:100%;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.5);font-size:13px;font-family:'JetBrains Mono',monospace;text-align:center;cursor:pointer}
+.ls-sinput:focus{background:rgba(45,90,60,.3);border-color:var(--al);color:var(--t);cursor:text}
+.ls-check{width:36px;height:36px;border-radius:8px;border:2px solid rgba(255,255,255,.1);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;cursor:pointer}
+.ls-check.done{border-color:var(--al);background:rgba(45,90,61,.3);color:var(--al);font-weight:700}
+.ls-swipe-bg{position:absolute;inset:0;display:flex;pointer-events:none;border-radius:8px}
+.ls-add-set{width:100%;padding:9px;border-radius:8px;background:transparent;border:1px dashed rgba(255,255,255,.08);color:rgba(255,255,255,.25);font-size:11px;font-weight:600;cursor:pointer;font-family:'JetBrains Mono',monospace;margin-top:3px}
+.ls-lp-menu{display:flex;background:rgba(20,25,35,.97);border:1px solid rgba(255,255,255,.1);border-radius:9px;overflow:hidden;margin-top:3px;animation:slideDown .15s ease}
+.ls-lp-btn{flex:1;padding:9px 10px;background:transparent;border:none;color:var(--t);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.ls-round{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;transition:all .2s ease}
+.ls-round-cycle{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);font-family:'JetBrains Mono',monospace;width:24px;flex-shrink:0}
+.ls-big-start{width:100%;padding:13px;border-radius:10px;background:var(--ad);border:1px solid rgba(45,90,61,.3);color:var(--al);font-size:15px;font-weight:600;cursor:pointer}
+.ls-apply-toast{margin:0 0 8px;padding:9px 14px;background:var(--ad);border:1px solid rgba(45,90,61,.3);border-radius:10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--t);animation:slideDown .25s ease;font-size:13px}
+.ls-rest-bar{position:sticky;top:0;z-index:30;padding:0 0 8px}
+.ls-rest-inner{background:var(--ad);border:1px solid rgba(45,90,61,.3);border-radius:14px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between}
+.ls-notes{font-size:12px;color:var(--t2);margin-top:5px;cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.08);display:inline-block}
 </style>
 </head>
 <body>
+<div class="app" id="app">
+<div class="screen active" id="screen-dash"></div>
+<div class="screen" id="screen-lift"></div>
+<div class="screen" id="screen-log"></div>
+<div class="screen" id="screen-coach"></div>
+<div class="screen" id="screen-config"></div>
+<div class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="dash" onclick="switchTab('dash')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg><span>Dash</span></button>
+  <button class="tab-btn" data-tab="lift" onclick="switchTab('lift')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="10" width="20" height="4" rx="1"/><path d="M6 6v12M18 6v12"/></svg><span>Lift</span><div class="dot"></div></button>
+  <button class="tab-btn" data-tab="log" onclick="switchTab('log')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg><span>Log</span></button>
+  <button class="tab-btn" data-tab="coach" onclick="switchTab('coach')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Coach</span></button>
+  <button class="tab-btn" data-tab="config" onclick="switchTab('config')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Config</span></button>
+</div>
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModal()"><div class="modal-inner" id="modalContent" onclick="event.stopPropagation()"></div></div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SERVICE WORKER
+// ═══════════════════════════════════════════════════════════════
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 
-<div class="shell">
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS & SEED DATA
+// ═══════════════════════════════════════════════════════════════
+const COLORS=["#c9453a","#3a7a52","#d4a037","#3a6b9f","#8b5cf6","#e67e22","#16a085","#c0392b"];
+const MUSCLES=["Chest","Back","Shoulders","Biceps","Triceps","Quads","Hamstrings","Glutes","Calves","Core","Forearms","Traps"];
+const EQUIP=["Barbell","Dumbbell","Cable","Machine","Bodyweight","Kettlebell","Band","Smith Machine","EZ Bar","Trap Bar"];
 
-  <!-- HEADER -->
-  <header>
-    <div class="logo">
-      VHS SEGMENTOR
-      <span>MANUAL MARKER EDITION</span>
+const SEED_EX=[
+  {id:"ex1",name:"Barbell Bench Press",muscles:["Chest","Triceps","Shoulders"],equipment:"Barbell",notes:""},
+  {id:"ex2",name:"Barbell Squat",muscles:["Quads","Glutes","Core"],equipment:"Barbell",notes:""},
+  {id:"ex3",name:"Barbell Deadlift",muscles:["Back","Hamstrings","Glutes","Core"],equipment:"Barbell",notes:""},
+  {id:"ex4",name:"Overhead Press",muscles:["Shoulders","Triceps"],equipment:"Barbell",notes:""},
+  {id:"ex5",name:"Barbell Row",muscles:["Back","Biceps"],equipment:"Barbell",notes:""},
+  {id:"ex6",name:"Pull-ups",muscles:["Back","Biceps"],equipment:"Bodyweight",notes:""},
+  {id:"ex7",name:"Dumbbell Curl",muscles:["Biceps"],equipment:"Dumbbell",notes:""},
+  {id:"ex8",name:"Tricep Pushdown",muscles:["Triceps"],equipment:"Cable",notes:""},
+  {id:"ex9",name:"Leg Press",muscles:["Quads","Glutes"],equipment:"Machine",notes:""},
+  {id:"ex10",name:"Lat Pulldown",muscles:["Back","Biceps"],equipment:"Cable",notes:""},
+  {id:"ex11",name:"Dumbbell Lateral Raise",muscles:["Shoulders"],equipment:"Dumbbell",notes:""},
+  {id:"ex12",name:"Romanian Deadlift",muscles:["Hamstrings","Glutes","Back"],equipment:"Barbell",notes:""},
+  {id:"ex13",name:"Cable Fly",muscles:["Chest"],equipment:"Cable",notes:""},
+  {id:"ex14",name:"Leg Curl",muscles:["Hamstrings"],equipment:"Machine",notes:""},
+  {id:"ex15",name:"Calf Raise",muscles:["Calves"],equipment:"Machine",notes:""},
+  {id:"ex16",name:"Plank",muscles:["Core"],equipment:"Bodyweight",notes:""},
+  {id:"ex17",name:"Face Pull",muscles:["Shoulders","Traps"],equipment:"Cable",notes:""},
+  {id:"ex18",name:"Incline Dumbbell Press",muscles:["Chest","Shoulders","Triceps"],equipment:"Dumbbell",notes:""},
+  {id:"ex19",name:"Hammer Curl",muscles:["Biceps","Forearms"],equipment:"Dumbbell",notes:""},
+  {id:"ex20",name:"Hip Thrust",muscles:["Glutes","Hamstrings"],equipment:"Barbell",notes:""},
+];
+
+const SEED_RT=[
+  {id:"rt1",name:"Push Day",description:"Chest, shoulders, triceps",color:"#c9453a",exercises:[{exerciseId:"ex1",sets:4,reps:"8-10",restSec:120,notes:"Warm up with bar"},{exerciseId:"ex18",sets:3,reps:"10-12",restSec:90,notes:""},{exerciseId:"ex13",sets:3,reps:"12-15",restSec:60,notes:"Squeeze at peak"},{exerciseId:"ex4",sets:4,reps:"6-8",restSec:120,notes:""},{exerciseId:"ex11",sets:3,reps:"12-15",restSec:60,notes:""},{exerciseId:"ex8",sets:3,reps:"12-15",restSec:60,notes:""}]},
+  {id:"rt2",name:"Pull Day",description:"Back, biceps, rear delts",color:"#3a7a52",exercises:[{exerciseId:"ex3",sets:4,reps:"5",restSec:180,notes:"Focus on form"},{exerciseId:"ex5",sets:4,reps:"8-10",restSec:90,notes:""},{exerciseId:"ex10",sets:3,reps:"10-12",restSec:90,notes:""},{exerciseId:"ex17",sets:3,reps:"15-20",restSec:60,notes:""},{exerciseId:"ex7",sets:3,reps:"10-12",restSec:60,notes:""},{exerciseId:"ex19",sets:3,reps:"10-12",restSec:60,notes:""}]},
+  {id:"rt3",name:"Leg Day",description:"Quads, hamstrings, glutes, calves",color:"#d4a037",exercises:[{exerciseId:"ex2",sets:4,reps:"6-8",restSec:180,notes:"Deep squat"},{exerciseId:"ex9",sets:3,reps:"10-12",restSec:120,notes:""},{exerciseId:"ex12",sets:3,reps:"10-12",restSec:90,notes:""},{exerciseId:"ex14",sets:3,reps:"12-15",restSec:60,notes:""},{exerciseId:"ex20",sets:3,reps:"10-12",restSec:90,notes:""},{exerciseId:"ex15",sets:4,reps:"15-20",restSec:60,notes:""}]},
+];
+
+// ═══════════════════════════════════════════════════════════════
+// EXERCISE TYPE DETECTION
+// ═══════════════════════════════════════════════════════════════
+const BW_SET=new Set([
+  "squats","squat","lunges","lunge","push-ups","pushups","push ups","pull-ups","pullups","pull ups",
+  "burpees","burpee","plank","planks","jumping jacks","jumping jack","mountain climbers","mountain climber",
+  "butt kicks","butt kick","high knees","high knee","crunches","crunch","sit-ups","situps","sit ups",
+  "dips","dip","leg raises","leg raise","flutter kicks","flutter kick","bicycle crunches",
+  "wall sit","wall sits","box jumps","box jump","step ups","step-ups","calf raises","calf raise",
+  "glute bridges","glute bridge","hip thrusts","hip thrust","superman","dead bugs","dead bug",
+  "bear crawl","bear crawls","inchworm","inchworms","star jumps","star jump",
+  "donkey kicks","donkey kick","fire hydrants","fire hydrant","side lunges","side lunge",
+  "reverse lunges","reverse lunge","curtsy lunges","curtsy lunge","pistol squats","pistol squat",
+  "jump squats","jump squat","sumo squats","sumo squat","air squats","air squat",
+  "split squats","split squat","bulgarian split squats","bulgarian split squat"
+]);
+const TIMED_KW=["run","walk","jog","sprint","bike","cycle","swim","row","hold","plank","wall sit","rest","stretching","stretch"];
+const DUR_RE=/(\d+)\s*(min|mins|minute|minutes|sec|secs|second|seconds)/i;
+
+function detectType(log){
+  const name=(log.name||'').toLowerCase().trim();
+  const notes=(log.notes||'').toLowerCase();
+  const combo=name+' '+notes;
+  const reps=(log.targetReps||'').toString().toLowerCase();
+  if(/run.*walk|walk.*run|interval/i.test(combo)||(DUR_RE.test(combo)&&TIMED_KW.some(k=>combo.includes(k))))return 'timed';
+  if(DUR_RE.test(reps)||DUR_RE.test(combo)){
+    const ex=getEx(log.exerciseId);
+    if(ex.equipment==='Bodyweight'||!log.sets||log.sets.some(s=>!s.weight&&s.weight!==0))return 'duration';
+  }
+  if(BW_SET.has(name)||BW_SET.has(name.replace(/s$/,''))){
+    const ex=getEx(log.exerciseId);
+    if(ex.equipment==='Bodyweight')return 'bodyweight';
+  }
+  return 'weighted';
+}
+
+function parseTimedRounds(log){
+  const combo=`${log.name} ${log.notes||''}`;
+  const segs=combo.match(/(\w+)\s+(\d+)\s*(min|mins|sec|secs)/gi);
+  if(!segs)return null;
+  const base=[];
+  segs.forEach(seg=>{const m=seg.match(/(\w+)\s+(\d+)\s*(min|mins|sec|secs)/i);
+    if(m)base.push({action:m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase(),duration:parseInt(m[2]),unit:m[3].replace(/s$/,'')});
+  });
+  const cycles=log.targetSets||4;
+  const out=[];
+  for(let c=0;c<cycles;c++)base.forEach((r,i)=>out.push({...r,id:`${c}-${i}`,cycle:c+1}));
+  return out.length?out:null;
+}
+
+function parseDuration(log){
+  const reps=(log.targetReps||'').toString();
+  const m=reps.match(/(\d+)\s*(min|mins|sec|secs|second|seconds|minute|minutes)?/i);
+  if(m){const v=parseInt(m[1]);const u=(m[2]||'').toLowerCase();return(u.startsWith('min'))?v*60:v;}
+  const m2=(log.name+' '+(log.notes||'')).match(/(\d+)\s*(sec|secs|min|mins)/i);
+  if(m2){const v=parseInt(m2[1]);return m2[2].startsWith('min')?v*60:v;}
+  return 60;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmtDate=d=>new Date(d).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+const fmtDateFull=d=>new Date(d).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+const fmtTime=s=>`${Math.floor(s/60)}:${(s%60).toString().padStart(2,"0")}`;
+const fmtTimer=s=>`${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+const esc=s=>{const d=document.createElement('div');d.textContent=s;return d.innerHTML};
+const volDisplay=v=>v>1000?(v/1000).toFixed(1)+'k':v;
+const getEx=id=>state.exercises.find(e=>e.id===id)||{name:"Unknown",muscles:[],equipment:""};
+const getRt=id=>state.routines.find(r=>r.id===id);
+
+function totalVolume(session){let v=0;(session.logs||[]).forEach(l=>(l.sets||[]).forEach(s=>{if(s.done)v+=(parseFloat(s.weight)||0)*(parseInt(s.reps)||0)}));return v}
+function getStreak(){if(!state.sessions.length)return 0;const sorted=[...state.sessions].sort((a,b)=>new Date(b.date)-new Date(a.date));let streak=0,check=new Date();check.setHours(0,0,0,0);for(let i=0;i<60;i++){const ds=check.toISOString().slice(0,10);if(sorted.some(s=>s.date&&s.date.startsWith(ds)))streak++;else if(i>0)break;check.setDate(check.getDate()-1)}return streak}
+
+// ═══════════════════════════════════════════════════════════════
+// STATE & STORAGE
+// ═══════════════════════════════════════════════════════════════
+let state={exercises:[],routines:[],sessions:[],profile:{name:"Paul",age:51,weight:"",height:"",experience:"Intermediate"},apiKey:"",activeSession:null,sessionTimer:0,coachMessages:[],coachRoutineId:null};
+let timerInterval=null,restInterval=null;
+// Live session state (not persisted)
+let ls={overrides:{},applyPrompt:null,applyTimer:null,editField:null,editVal:'',timedActive:null,timedSec:0,timedRunning:false,timedInterval:null,restActive:false,restSec:0,restExId:null,completedRounds:{},showLpMenu:null,swipeState:{}};
+
+function save(){
+  try{localStorage.setItem('apex-data',JSON.stringify({exercises:state.exercises,routines:state.routines,sessions:state.sessions,profile:state.profile,apiKey:state.apiKey}))}catch(e){console.warn('Save:',e)}
+}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem('apex-data'));
+    if(d){
+      state.exercises=d.exercises?.length?d.exercises:[...SEED_EX];
+      state.routines=d.routines?.length?d.routines:JSON.parse(JSON.stringify(SEED_RT));
+      state.sessions=d.sessions||[];
+      if(d.profile)Object.assign(state.profile,d.profile);
+      state.apiKey=d.apiKey||"";
+    }else{state.exercises=[...SEED_EX];state.routines=JSON.parse(JSON.stringify(SEED_RT))}
+  }catch{state.exercises=[...SEED_EX];state.routines=JSON.parse(JSON.stringify(SEED_RT))}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI ENGINE
+// ═══════════════════════════════════════════════════════════════
+const IMG_PROMPT=`You are an expert workout routine parser that reads images of workout programs, fitness plans, gym routines, magazine pages, handwritten notes, infographics, and screenshots.
+
+CRITICAL RULES:
+1. Read EVERY exercise, set, rep, and detail visible in the image.
+2. If the image contains MULTIPLE routines or days (e.g., Monday-Friday, Day 1/Day 2), return ALL of them as separate routines.
+3. For timed exercises (e.g., "30 sec plank"), use sets:1 and reps:"30 sec".
+4. For cardio intervals (e.g., "Run 2 min, walk 2 min x7"), use sets for cycles and describe in reps/notes.
+5. For rep-based exercises (e.g., "20 squats"), use sets:1 and reps:"20".
+6. Assign realistic muscle groups. Equipment is "Bodyweight" unless specified.
+7. Assign a unique hex color to each routine.
+
+Return ONLY valid JSON, no markdown, no backticks:
+For SINGLE routine: {"name":"...","description":"...","color":"#hex","exercises":[{"name":"...","sets":N,"reps":"...","restSec":N,"muscles":["..."],"equipment":"...","notes":"..."}]}
+For MULTIPLE routines: {"routines":[{...same structure...}]}`;
+
+const TXT_PROMPT=`You parse workout routines from text into JSON. If multiple routines/days exist, return all.
+Return ONLY valid JSON. Single: {"name":"...","description":"...","color":"#hex","exercises":[...]}
+Multiple: {"routines":[{...}]}. No markdown, no backticks.`;
+
+async function callAI(system,messages,maxTokens=2000){
+  if(!state.apiKey)throw new Error('No API key. Add your Anthropic API key in Config → AI Settings.');
+  const resp=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":state.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:maxTokens,system,messages})
+  });
+  if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(`API ${resp.status}: ${e.error?.message||'error'}`);}
+  const data=await resp.json();
+  return data.content?.map(c=>c.text||'').join('')||'';
+}
+
+function compressImage(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{const c=document.createElement('canvas');let w=img.width,h=img.height;if(w>1200){h=(1200/w)*h;w=1200}c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res({b64:c.toDataURL('image/jpeg',.85).split(',')[1],type:'image/jpeg'});};
+    img.onerror=rej;img.src=URL.createObjectURL(file);
+  });
+}
+function readFileB64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();r.onload=()=>{const url=r.result;const b64=url.split(',')[1];const m=url.match(/^data:(image\/[a-z+]+);/);res({b64,type:m?m[1]:(file.type||'image/png')});};r.onerror=rej;r.readAsDataURL(file);
+  });
+}
+function parseJSON(text){let t=text.replace(/```json\s*/g,'').replace(/```/g,'').trim();const s=t.indexOf('{'),e=t.lastIndexOf('}');if(s>=0&&e>s)t=t.substring(s,e+1);return JSON.parse(t)}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tab){
+  state.currentTab=tab;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);if(b.dataset.tab==='lift')b.classList.toggle('has-session',!!state.activeSession)});
+  render();
+}
+function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').style.display='flex'}
+function closeModal(){document.getElementById('modalOverlay').style.display='none'}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function renderDash(){
+  const streak=getStreak();
+  const thisWeek=state.sessions.filter(s=>{const d=new Date(s.date);return(Date.now()-d)/86400000<7});
+  const weekVol=thisWeek.reduce((s,x)=>s+totalVolume(x),0);
+  const hasKey=!!state.apiKey;
+
+  let h=`<div class="top-bar"><div style="display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:13px;color:var(--t2);font-weight:500">APEX</div><div class="h1">Dashboard</div></div>
+    <div class="api-status ${hasKey?'api-on':'api-off'}">${hasKey?'● AI Ready':'○ No API Key'}</div>
+  </div></div>
+  <div style="padding:0 16px 20px">
+    <div class="stat-grid">
+      <div class="card stat-card" style="margin-bottom:0"><div style="font-size:14px">🔥</div><div class="stat-val mono" style="color:${streak?'#e67e22':'var(--t2)'}">${streak}d</div><div class="stat-label">Streak</div></div>
+      <div class="card stat-card" style="margin-bottom:0"><div style="font-size:14px">✓</div><div class="stat-val mono" style="color:var(--al)">${thisWeek.length}</div><div class="stat-label">This Week</div></div>
+      <div class="card stat-card" style="margin-bottom:0"><div style="font-size:14px">⚡</div><div class="stat-val mono" style="color:var(--w)">${volDisplay(weekVol)}</div><div class="stat-label">Volume</div></div>
     </div>
-    <div class="header-right">
-      <div class="turbo-wrap">
-        <span class="turbo-lbl" id="turbo-lbl">TURBO</span>
-        <label class="sw">
-          <input type="checkbox" id="turbo-toggle">
-          <span class="sw-track"></span>
-        </label>
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <div class="h2">Your Routines</div>
+      <button class="btn-sm" onclick="openEditRoutine()">+ New</button>
+    </div>`;
+
+  state.routines.forEach(r=>{
+    const muscles=[...new Set(r.exercises.flatMap(e=>getEx(e.exerciseId).muscles))].slice(0,4);
+    const last=state.sessions.find(s=>s.routineId===r.id);
+    h+=`<div class="card routine-card" style="border-left-color:${r.color}" onclick="openViewRoutine('${r.id}')">
+      <div class="row" style="justify-content:space-between"><div>
+        <div class="h3" style="color:${r.color}">${esc(r.name)}</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px">${r.exercises.length} exercises · ${esc(muscles.join(', '))}</div>
+        ${last?`<div style="font-size:11px;color:var(--t2);margin-top:2px">Last: ${fmtDate(last.date)}</div>`:''}
       </div>
+      <button class="btn" style="width:auto;padding:10px 16px;background:${r.color}" onclick="event.stopPropagation();startSession('${r.id}')">▶ Start</button>
+    </div></div>`;
+  });
+
+  h+=`<div class="import-zone" style="margin-top:16px" onclick="openImportModal()">
+    <div style="font-size:24px;margin-bottom:4px">📸</div>
+    <div style="font-weight:700;color:var(--al)">Import Routine from Photo or Text</div>
+    <div style="font-size:12px;color:var(--t2);margin-top:4px">${hasKey?'AI vision parsing · multi-day programs · screenshots':'Add API key in Config to enable AI import'}</div>
+  </div>`;
+
+  if(state.sessions.length){
+    h+=`<div class="h2" style="margin-top:20px;margin-bottom:8px">Recent Sessions</div>`;
+    state.sessions.slice(0,5).forEach(s=>{
+      const vol=totalVolume(s);
+      h+=`<div class="card" style="padding:12px"><div class="row" style="justify-content:space-between"><div>
+        <div class="h3">${esc(s.routineName)}</div>
+        <div style="font-size:12px;color:var(--t2)">${fmtDate(s.date)} · ${fmtTime(s.duration)} · ${s.completedSets}/${s.totalSets} sets</div>
+      </div><div class="mono" style="font-size:13px;font-weight:700;color:var(--al)">${volDisplay(vol)} lbs</div></div></div>`;
+    });
+  }
+  h+='</div>';
+  document.getElementById('screen-dash').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: LIFT (NEW SMART SESSION)
+// ═══════════════════════════════════════════════════════════════
+function getSetVal(exIdx,sIdx,field){
+  const key=`${exIdx}-${sIdx}`;
+  if(ls.overrides[key]?.[field]!==undefined)return ls.overrides[key][field];
+  const log=state.activeSession?.logs[exIdx];
+  if(!log)return '';
+  if(field==='weight')return log.sets[sIdx]?.weight||'';
+  if(field==='reps'){
+    if(log.sets[sIdx]?.reps)return log.sets[sIdx].reps;
+    const r=log.targetReps||'';
+    const m=r.match(/^(\d+)/);return m?m[1]:r;
+  }
+  return '';
+}
+
+function renderLift(){
+  const el=document.getElementById('screen-lift');
+  if(!state.activeSession){
+    let h=`<div class="top-bar"><div class="h1">Lift</div></div><div style="text-align:center;padding:40px 20px">
+      <div style="font-size:48px;margin-bottom:16px">🏋️</div>
+      <div class="h2" style="margin-bottom:8px">No Active Session</div>
+      <div class="muted" style="margin-bottom:20px">Pick a routine to start lifting.</div>`;
+    state.routines.forEach(r=>{h+=`<button class="btn" style="margin-bottom:8px;background:${r.color}" onclick="startSession('${r.id}')">▶ ${esc(r.name)}</button>`});
+    h+='</div>';el.innerHTML=h;return;
+  }
+  const as=state.activeSession,rt=getRt(as.routineId);
+  let totalDone=0,totalSets=0;
+  as.logs.forEach((log,exIdx)=>{
+    const type=detectType(log);
+    if(type==='timed'){const rounds=parseTimedRounds(log);if(rounds){totalSets+=rounds.length;totalDone+=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;}}
+    else{totalSets+=log.sets.length;totalDone+=log.sets.filter(s=>s.done).length;}
+  });
+  const pct=totalSets?(totalDone/totalSets)*100:0;
+  const clr=rt?.color||'var(--al)';
+
+  let h=`<div class="top-bar" style="padding-bottom:4px">
+    <div class="row" style="justify-content:space-between;width:100%"><div>
+      <div style="font-size:11px;color:${clr};font-weight:700;text-transform:uppercase;letter-spacing:1px">● LIVE SESSION</div>
+      <div class="h1">${esc(rt?.name||'Workout')}</div>
+    </div><div style="text-align:right">
+      <div class="mono" style="font-size:22px;font-weight:800;color:var(--al)">${fmtTimer(state.sessionTimer)}</div>
+      <button class="btn-sm btn-danger" style="margin-top:4px" onclick="finishSession()">Finish</button>
+    </div></div>
+    <div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:${pct}%;background:${clr}"></div></div>
+  </div><div style="padding:8px 12px 20px">`;
+
+  // Rest timer bar
+  if(ls.restActive&&ls.restSec>0){
+    h+=`<div class="ls-rest-bar"><div class="ls-rest-inner">
+      <span style="font-size:12px;color:var(--t2)">REST</span>
+      <span class="mono" style="font-size:26px;font-weight:700;color:var(--al)" id="lsRestDisplay">${fmtTimer(ls.restSec)}</span>
+      <button class="btn-sm" onclick="lsSkipRest()">Skip ×</button>
+    </div></div>`;
+  }
+
+  // Apply-to-remaining toast
+  if(ls.applyPrompt){
+    const ap=ls.applyPrompt;
+    const label=ap.field==='weight'?`${ap.value} lbs`:`${ap.value} reps`;
+    h+=`<div class="ls-apply-toast" onclick="lsApplyToRemaining()">
+      <span>Apply <strong style="color:var(--al)">${label}</strong> to sets below?</span>
+      <span style="color:var(--al);font-weight:700;white-space:nowrap;margin-left:8px">Apply ↓</span>
+    </div>`;
+  }
+
+  // Exercise cards
+  as.logs.forEach((log,exIdx)=>{
+    const type=detectType(log);
+    const ex=getEx(log.exerciseId);
+    switch(type){
+      case 'timed': h+=renderTimedCard(log,exIdx,clr); break;
+      case 'duration': h+=renderDurationCard(log,exIdx); break;
+      case 'bodyweight': h+=renderSetsCard(log,exIdx,'bodyweight'); break;
+      default: h+=renderSetsCard(log,exIdx,'weighted'); break;
+    }
+  });
+
+  h+=`<button class="btn" style="margin-top:12px;background:linear-gradient(135deg,#2d5a3c,#4a7c59)" onclick="finishSession()">✔ Finish Session</button></div>`;
+  el.innerHTML=h;
+}
+
+function renderSetsCard(log,exIdx,type){
+  const ex=getEx(log.exerciseId);
+  const totalSets=log.sets.length;
+  const done=log.sets.filter(s=>s.done).length;
+  const badgeStyle=type==='weighted'?'background:rgba(180,100,100,.15);color:#d47e7e':'background:rgba(100,140,180,.15);color:#7eb0d4';
+  const label=type==='weighted'?'🔩 WEIGHTED':'🏋 BODYWEIGHT';
+  const isEdName=ls.editField===`${exIdx}:name`;
+
+  let h=`<div class="ls-card"><div class="ls-card-head"><div style="flex:1">`;
+  if(isEdName)h+=`<input autofocus class="ls-ex-name" value="${esc(ls.editVal)}" style="background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;padding:4px 8px;color:var(--t);font-size:16px;font-weight:700;width:100%" onblur="lsSaveEdit()" onkeydown="if(event.key==='Enter')lsSaveEdit();if(event.key==='Escape')lsCancelEdit()">`;
+  else h+=`<span class="ls-ex-name" onclick="lsStartEdit('${exIdx}:name','${esc(log.name)}')">${esc(log.name)}</span>`;
+  h+=`<div class="ls-meta"><span class="ls-type-badge" style="${badgeStyle}">${label}</span>
+    <span style="font-size:11px;color:var(--t2);font-family:'JetBrains Mono',monospace">${totalSets}×${log.targetReps||'—'}</span>`;
+  if(log.restSec>0)h+=`<span class="ls-rest-badge">Rest ${log.restSec}s</span>`;
+  else h+=`<span class="ls-add-rest" onclick="lsShowAddRest(${exIdx})">+ Rest</span>`;
+  h+=`</div>`;
+  if(log.notes){
+    const isEdNotes=ls.editField===`${exIdx}:notes`;
+    if(isEdNotes)h+=`<input autofocus value="${esc(ls.editVal)}" style="margin-top:5px;font-size:12px;padding:4px 8px;background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;color:var(--t);width:100%" onblur="lsSaveEdit()" onkeydown="if(event.key==='Enter')lsSaveEdit();if(event.key==='Escape')lsCancelEdit()">`;
+    else h+=`<span class="ls-notes" onclick="lsStartEdit('${exIdx}:notes','${esc(log.notes)}')">${esc(log.notes)}</span>`;
+  }
+  h+=`</div><div class="ls-pill"><span class="ls-pill-n">${done}</span><span class="ls-pill-s">/</span><span class="ls-pill-d">${totalSets}</span></div></div>`;
+
+  // Set rows
+  h+=`<div class="ls-sets"><div class="ls-set-hdr"><span style="width:24px">SET</span>`;
+  if(type==='weighted')h+=`<span style="flex:1">WEIGHT</span>`;
+  h+=`<span style="flex:1">REPS</span><span style="width:36px"></span></div>`;
+
+  for(let i=0;i<totalSets;i++){
+    const isDone=log.sets[i].done;
+    const w=getSetVal(exIdx,i,'weight');
+    const r=getSetVal(exIdx,i,'reps');
+    const showLp=ls.showLpMenu===`${exIdx}-${i}`;
+
+    h+=`<div class="ls-srow-wrap" id="srow-${exIdx}-${i}">`;
+    // Swipe background
+    h+=`<div class="ls-swipe-bg"><div style="flex:1;display:flex;align-items:center;padding-left:10px"><span style="font-size:11px;color:var(--al);font-weight:700;font-family:'JetBrains Mono',monospace;opacity:0" id="swL-${exIdx}-${i}">+ ADD SET</span></div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;padding-right:10px"><span style="font-size:11px;color:var(--r);font-weight:700;font-family:'JetBrains Mono',monospace;opacity:0" id="swR-${exIdx}-${i}">REMOVE ×</span></div></div>`;
+    // Row
+    h+=`<div class="ls-srow ${isDone?'done':''}" id="sr-${exIdx}-${i}"
+      ontouchstart="lsTS(event,${exIdx},${i})" ontouchmove="lsTM(event,${exIdx},${i})" ontouchend="lsTE(event,${exIdx},${i},${totalSets})">
+      <span class="ls-snum">${i+1}</span>`;
+    if(type==='weighted'){
+      const isEdW=ls.editField===`${exIdx}:weight:${i}`;
+      if(isEdW)h+=`<div style="flex:1"><input autofocus type="number" inputmode="decimal" value="${esc(ls.editVal)}" class="ls-sinput" style="background:rgba(45,90,60,.3);border-color:var(--al);color:var(--t)" onblur="lsSaveSetEdit(${exIdx},${i},'weight')" onkeydown="if(event.key==='Enter')lsSaveSetEdit(${exIdx},${i},'weight');if(event.key==='Escape')lsCancelEdit()"></div>`;
+      else h+=`<div style="flex:1"><span class="ls-sinput" onclick="lsStartEdit('${exIdx}:weight:${i}','${w}')">${w||'<span style=opacity:.3>lbs</span>'}</span></div>`;
+    }
+    const isEdR=ls.editField===`${exIdx}:reps:${i}`;
+    if(isEdR)h+=`<div style="flex:1"><input autofocus type="number" inputmode="numeric" value="${esc(ls.editVal)}" class="ls-sinput" style="background:rgba(45,90,60,.3);border-color:var(--al);color:var(--t)" onblur="lsSaveSetEdit(${exIdx},${i},'reps')" onkeydown="if(event.key==='Enter')lsSaveSetEdit(${exIdx},${i},'reps');if(event.key==='Escape')lsCancelEdit()"></div>`;
+    else h+=`<div style="flex:1"><span class="ls-sinput" onclick="lsStartEdit('${exIdx}:reps:${i}','${r}')">${r||'<span style=opacity:.3>reps</span>'}</span></div>`;
+    h+=`<button class="ls-check ${isDone?'done':''}" onclick="lsToggleSet(${exIdx},${i})">${isDone?'✓':''}</button>`;
+    h+=`</div>`;
+
+    // Long-press menu
+    if(showLp){
+      h+=`<div class="ls-lp-menu"><button class="ls-lp-btn" onclick="lsAddSet(${exIdx});ls.showLpMenu=null"><span style="color:var(--al)">＋</span> Add Set</button>`;
+      if(totalSets>1)h+=`<button class="ls-lp-btn" style="border-left:1px solid rgba(255,255,255,.06)" onclick="lsRemoveSet(${exIdx});ls.showLpMenu=null"><span style="color:var(--r)">✕</span> Remove</button>`;
+      h+=`<button class="ls-lp-btn" style="border-left:1px solid rgba(255,255,255,.06);color:var(--t2)" onclick="ls.showLpMenu=null;renderLift()">Cancel</button></div>`;
+    }
+    h+=`</div>`;
+  }
+  h+=`<button class="ls-add-set" onclick="lsAddSet(${exIdx})">+ Add Set</button></div></div>`;
+  return h;
+}
+
+function renderTimedCard(log,exIdx,clr){
+  const rounds=parseTimedRounds(log)||[];
+  const done=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;
+  const isEdName=ls.editField===`${exIdx}:name`;
+
+  let h=`<div class="ls-card"><div class="ls-card-head"><div style="flex:1">`;
+  if(isEdName)h+=`<input autofocus class="ls-ex-name" value="${esc(ls.editVal)}" style="background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;padding:4px 8px;color:var(--t);font-size:16px;font-weight:700;width:100%" onblur="lsSaveEdit()" onkeydown="if(event.key==='Enter')lsSaveEdit();if(event.key==='Escape')lsCancelEdit()">`;
+  else h+=`<span class="ls-ex-name" onclick="lsStartEdit('${exIdx}:name','${esc(log.name)}')">${esc(log.name)}</span>`;
+  h+=`<div class="ls-meta"><span class="ls-type-badge" style="background:var(--ad);color:var(--al)">⏱ TIMED</span>`;
+  if(log.restSec>0)h+=`<span class="ls-rest-badge">Rest ${log.restSec}s</span>`;
+  else h+=`<span class="ls-add-rest" onclick="lsShowAddRest(${exIdx})">+ Rest</span>`;
+  h+=`</div>`;
+  if(log.notes){
+    const isEdN=ls.editField===`${exIdx}:notes`;
+    if(isEdN)h+=`<input autofocus value="${esc(ls.editVal)}" style="margin-top:5px;font-size:12px;padding:4px 8px;background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;color:var(--t);width:100%" onblur="lsSaveEdit()" onkeydown="if(event.key==='Enter')lsSaveEdit();if(event.key==='Escape')lsCancelEdit()">`;
+    else h+=`<span class="ls-notes" onclick="lsStartEdit('${exIdx}:notes','${esc(log.notes)}')">${esc(log.notes)}</span>`;
+  }
+  h+=`</div><div class="ls-pill"><span class="ls-pill-n">${done}</span><span class="ls-pill-s">/</span><span class="ls-pill-d">${rounds.length}</span></div></div>`;
+
+  h+=`<div style="padding:0 8px 8px;display:flex;flex-direction:column;gap:3px">`;
+  rounds.forEach(round=>{
+    const key=`${exIdx}-${round.id}`;
+    const isDone=ls.completedRounds[key];
+    const isActive=ls.timedActive===key;
+    const sec=round.unit==='min'?round.duration*60:round.duration;
+    h+=`<div class="ls-round" style="background:${isDone?'rgba(45,90,60,.3)':isActive?'rgba(74,124,89,.2)':'rgba(255,255,255,.03)'};border-left:3px solid ${isActive?'var(--al)':'transparent'}">
+      <div class="ls-round-cycle">R${round.cycle}</div>
+      <div style="flex:1"><span style="color:${isDone?'rgba(255,255,255,.4)':'var(--t)'};text-decoration:${isDone?'line-through':'none'};font-weight:500;font-size:14px">${round.action} ${round.duration} ${round.unit}</span></div>`;
+    if(isActive&&ls.timedRunning){
+      h+=`<span class="mono" style="color:var(--al);font-weight:700;font-size:16px" id="lsTimedDisp">${fmtTimer(ls.timedSec)}</span>
+        <button style="width:30px;height:30px;border-radius:8px;background:var(--a);border:none;color:#fff;font-weight:700;font-size:13px;cursor:pointer" onclick="lsFinishTimedRound(${exIdx},'${round.id}')">✓</button>`;
+    }else if(!isDone){
+      h+=`<button style="width:30px;height:30px;border-radius:8px;background:var(--ad);border:1px solid rgba(45,90,61,.4);color:var(--al);font-size:11px;cursor:pointer" onclick="lsStartTimed('${key}',${sec})">▶</button>
+        <button class="ls-check" onclick="lsToggleRound(${exIdx},'${round.id}')"></button>`;
+    }else{
+      h+=`<div style="width:30px;height:30px;border-radius:8px;background:rgba(74,124,89,.3);display:flex;align-items:center;justify-content:center;color:var(--al);font-weight:700;font-size:13px">✓</div>`;
+    }
+    h+=`</div>`;
+  });
+  h+=`</div></div>`;
+  return h;
+}
+
+function renderDurationCard(log,exIdx){
+  const isDone=log.sets[0]?.done;
+  const sec=parseDuration(log);
+  const isActive=ls.timedActive===`${exIdx}-dur`;
+  const isEdName=ls.editField===`${exIdx}:name`;
+
+  let h=`<div class="ls-card"><div class="ls-card-head"><div style="flex:1">`;
+  if(isEdName)h+=`<input autofocus value="${esc(ls.editVal)}" style="background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;padding:4px 8px;color:var(--t);font-size:16px;font-weight:700;width:100%" onblur="lsSaveEdit()" onkeydown="if(event.key==='Enter')lsSaveEdit();if(event.key==='Escape')lsCancelEdit()">`;
+  else h+=`<span class="ls-ex-name" onclick="lsStartEdit('${exIdx}:name','${esc(log.name)}')">${esc(log.name)}</span>`;
+  h+=`<div class="ls-meta"><span class="ls-type-badge" style="background:var(--ad);color:var(--al)">⏳ DURATION</span>
+    <span style="font-size:11px;color:var(--t2);font-family:'JetBrains Mono',monospace">${log.sets.length}×${sec}s</span>`;
+  if(log.restSec>0)h+=`<span class="ls-rest-badge">Rest ${log.restSec}s</span>`;
+  h+=`</div>`;
+  if(log.notes)h+=`<span class="ls-notes">${esc(log.notes)}</span>`;
+  h+=`</div><div class="ls-pill"><span class="ls-pill-n">${isDone?1:0}</span><span class="ls-pill-s">/</span><span class="ls-pill-d">1</span></div></div>`;
+
+  h+=`<div style="padding:0 14px 14px">`;
+  if(isActive&&ls.timedRunning){
+    h+=`<div style="text-align:center;padding:10px 0">
+      <div class="mono" style="font-size:40px;font-weight:700;color:var(--al);letter-spacing:2px" id="lsTimedDisp">${fmtTimer(ls.timedSec)}</div>
+      <button class="btn" style="margin-top:10px;width:auto;padding:10px 28px" onclick="lsFinishDuration(${exIdx})">Done ✓</button></div>`;
+  }else if(isDone){
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span style="color:var(--al);font-size:17px">✓ Completed</span><span style="color:var(--t2);font-size:13px">${sec}s</span></div>`;
+  }else{
+    h+=`<button class="ls-big-start" onclick="lsStartTimed('${exIdx}-dur',${sec})">Start Timer — ${sec}s</button>`;
+  }
+  h+=`</div></div>`;
+  return h;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LIVE SESSION HANDLERS
+// ═══════════════════════════════════════════════════════════════
+function lsToggleSet(exIdx,sIdx){
+  if(!state.activeSession)return;
+  const log=state.activeSession.logs[exIdx];
+  const set=log.sets[sIdx];
+  set.done=!set.done;
+  if(set.done){
+    set.weight=getSetVal(exIdx,sIdx,'weight');
+    set.reps=getSetVal(exIdx,sIdx,'reps');
+    // Check if all sets done → prompt rest
+    if(log.sets.every(s=>s.done)&&exIdx<state.activeSession.logs.length-1){
+      setTimeout(()=>lsPromptRest(exIdx),300);
+    }
+  }
+  renderLift();
+}
+
+function lsToggleRound(exIdx,roundId){
+  const key=`${exIdx}-${roundId}`;
+  if(ls.completedRounds[key])delete ls.completedRounds[key];
+  else{
+    ls.completedRounds[key]={time:Date.now()};
+    // Check all rounds done
+    const log=state.activeSession.logs[exIdx];
+    const rounds=parseTimedRounds(log);
+    if(rounds&&rounds.every(r=>ls.completedRounds[`${exIdx}-${r.id}`])&&exIdx<state.activeSession.logs.length-1){
+      setTimeout(()=>lsPromptRest(exIdx),300);
+    }
+  }
+  renderLift();
+}
+
+function lsAddSet(exIdx){
+  if(!state.activeSession)return;
+  state.activeSession.logs[exIdx].sets.push({weight:'',reps:'',done:false});
+  ls.showLpMenu=null;renderLift();
+}
+function lsRemoveSet(exIdx){
+  if(!state.activeSession)return;
+  const log=state.activeSession.logs[exIdx];
+  if(log.sets.length<=1)return;
+  const last=log.sets.length-1;
+  log.sets.pop();
+  delete ls.overrides[`${exIdx}-${last}`];
+  ls.showLpMenu=null;renderLift();
+}
+
+// Inline editing
+function lsStartEdit(field,value){ls.editField=field;ls.editVal=value||'';renderLift();setTimeout(()=>{const inp=document.querySelector('#screen-lift input[autofocus]');if(inp){inp.focus();inp.select();}},30)}
+function lsCancelEdit(){ls.editField=null;ls.editVal='';renderLift()}
+function lsSaveEdit(){
+  if(!ls.editField||!state.activeSession){ls.editField=null;renderLift();return;}
+  const [exIdxS,field]=ls.editField.split(':');
+  const exIdx=parseInt(exIdxS);
+  const log=state.activeSession.logs[exIdx];
+  if(field==='name')log.name=ls.editVal||log.name;
+  if(field==='notes')log.notes=ls.editVal;
+  ls.editField=null;ls.editVal='';renderLift();
+}
+function lsSaveSetEdit(exIdx,sIdx,field){
+  const val=ls.editVal===''?null:Number(ls.editVal);
+  const key=`${exIdx}-${sIdx}`;
+  ls.overrides[key]={...(ls.overrides[key]||{}),[field]:val};
+  // Also write to the set data
+  const log=state.activeSession.logs[exIdx];
+  if(log.sets[sIdx])log.sets[sIdx][field]=val||'';
+  // Show apply prompt if not last set
+  if(val!==null&&sIdx<log.sets.length-1){
+    ls.applyPrompt={exIdx,sIdx,field,value:val};
+    clearTimeout(ls.applyTimer);
+    ls.applyTimer=setTimeout(()=>{ls.applyPrompt=null;renderLift()},5000);
+  }
+  ls.editField=null;ls.editVal='';renderLift();
+}
+
+function lsApplyToRemaining(){
+  if(!ls.applyPrompt)return;
+  const{exIdx,sIdx,field,value}=ls.applyPrompt;
+  const log=state.activeSession.logs[exIdx];
+  for(let i=sIdx+1;i<log.sets.length;i++){
+    const k=`${exIdx}-${i}`;
+    ls.overrides[k]={...(ls.overrides[k]||{}),[field]:value};
+    log.sets[i][field]=value;
+  }
+  ls.applyPrompt=null;clearTimeout(ls.applyTimer);renderLift();
+}
+
+// Rest timer
+function lsPromptRest(exIdx){
+  const log=state.activeSession.logs[exIdx];
+  const sec=log.restSec||30;
+  openModal(`<div style="text-align:center;padding:16px">
+    <div style="font-size:36px;margin-bottom:8px">⏸</div>
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:4px">Rest Period</h3>
+    <p style="font-size:13px;color:var(--t2);margin-bottom:16px">Exercise complete! Take a breather?</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">${[15,30,45,60,90,120].map(s=>`<button class="btn-sm" style="padding:10px;font-size:14px;font-family:'JetBrains Mono',monospace;${s===sec?'background:var(--a);color:#fff':''}" onclick="lsStartRest(${s})">${s<60?s+'s':(s/60)+'m'}</button>`).join('')}</div>
+    <button class="btn" onclick="lsStartRest(${sec})">Start Rest — ${sec}s</button>
+    <button style="width:100%;padding:12px;background:transparent;border:none;color:var(--t2);font-size:14px;cursor:pointer;margin-top:4px" onclick="closeModal()">Skip Rest →</button>
+  </div>`);
+}
+function lsStartRest(sec){
+  closeModal();ls.restActive=true;ls.restSec=sec;renderLift();
+  clearInterval(restInterval);
+  restInterval=setInterval(()=>{
+    ls.restSec--;
+    const d=document.getElementById('lsRestDisplay');
+    if(d)d.textContent=fmtTimer(Math.max(0,ls.restSec));
+    if(ls.restSec<=0){clearInterval(restInterval);ls.restActive=false;renderLift();}
+  },1000);
+}
+function lsSkipRest(){clearInterval(restInterval);ls.restActive=false;ls.restSec=0;renderLift()}
+
+function lsShowAddRest(exIdx){
+  openModal(`<div style="text-align:center;padding:16px">
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:16px">Add Rest Period</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">${[15,30,45,60,90,120].map(s=>`<button class="btn-sm" style="padding:10px;font-size:14px;font-family:'JetBrains Mono',monospace" onclick="state.activeSession.logs[${exIdx}].restSec=${s};closeModal();renderLift()">${s<60?s+'s':(s/60)+'m'}</button>`).join('')}</div>
+  </div>`);
+}
+
+// Timed exercises
+function lsStartTimed(key,sec){
+  ls.timedActive=key;ls.timedSec=sec;ls.timedRunning=true;renderLift();
+  clearInterval(ls.timedInterval);
+  ls.timedInterval=setInterval(()=>{
+    ls.timedSec--;
+    const d=document.getElementById('lsTimedDisp');
+    if(d)d.textContent=fmtTimer(Math.max(0,ls.timedSec));
+    if(ls.timedSec<=0){clearInterval(ls.timedInterval);ls.timedRunning=false;renderLift();}
+  },1000);
+}
+function lsFinishTimedRound(exIdx,roundId){
+  clearInterval(ls.timedInterval);ls.timedRunning=false;ls.timedActive=null;
+  lsToggleRound(exIdx,roundId);
+}
+function lsFinishDuration(exIdx){
+  clearInterval(ls.timedInterval);ls.timedRunning=false;ls.timedActive=null;
+  if(state.activeSession.logs[exIdx].sets[0])state.activeSession.logs[exIdx].sets[0].done=true;
+  if(exIdx<state.activeSession.logs.length-1)setTimeout(()=>lsPromptRest(exIdx),300);
+  renderLift();
+}
+
+// Swipe handling
+function lsTS(e,exIdx,sIdx){
+  const t=e.touches[0];
+  ls.swipeState[`${exIdx}-${sIdx}`]={x:t.clientX,y:t.clientY,time:Date.now(),lpTimer:setTimeout(()=>{ls.showLpMenu=`${exIdx}-${sIdx}`;if(navigator.vibrate)navigator.vibrate(25);renderLift();},500)};
+}
+function lsTM(e,exIdx,sIdx){
+  const st=ls.swipeState[`${exIdx}-${sIdx}`];if(!st)return;
+  const dx=e.touches[0].clientX-st.x;
+  const dy=e.touches[0].clientY-st.y;
+  if(Math.abs(dy)>Math.abs(dx)+5){clearTimeout(st.lpTimer);return;}
+  if(Math.abs(dx)>8)clearTimeout(st.lpTimer);
+  const clamped=Math.max(-85,Math.min(85,dx));
+  const row=document.getElementById(`sr-${exIdx}-${sIdx}`);
+  if(row)row.style.transform=`translateX(${clamped}px)`;
+  const lbl=document.getElementById(`swL-${exIdx}-${sIdx}`);
+  const rbr=document.getElementById(`swR-${exIdx}-${sIdx}`);
+  if(lbl)lbl.style.opacity=dx>15?'1':'0';
+  if(rbr)rbr.style.opacity=dx<-15?'1':'0';
+  // visual bg
+  const wrap=document.getElementById(`srow-${exIdx}-${sIdx}`);
+  if(wrap){
+    if(dx>15)wrap.style.background='rgba(45,90,61,.15)';
+    else if(dx<-15)wrap.style.background='rgba(201,69,58,.1)';
+    else wrap.style.background='';
+  }
+  st.dx=clamped;
+}
+function lsTE(e,exIdx,sIdx,totalSets){
+  const st=ls.swipeState[`${exIdx}-${sIdx}`];if(!st){return;}
+  clearTimeout(st.lpTimer);
+  if((st.dx||0)>50)lsAddSet(exIdx);
+  else if((st.dx||0)<-50&&totalSets>1)lsRemoveSet(exIdx);
+  else{const row=document.getElementById(`sr-${exIdx}-${sIdx}`);if(row)row.style.transform='';}
+  delete ls.swipeState[`${exIdx}-${sIdx}`];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: LOG
+// ═══════════════════════════════════════════════════════════════
+function renderLog(){
+  let h=`<div class="top-bar"><div class="h1">Log</div><div class="muted">${state.sessions.length} sessions recorded</div></div><div style="padding:0 16px 20px">`;
+  if(!state.sessions.length){h+=`<div class="card" style="text-align:center;padding:32px"><div class="muted">No sessions logged yet.</div></div>`}
+  else state.sessions.forEach(s=>{
+    const vol=totalVolume(s);
+    h+=`<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><div>
+      <div class="h3">${esc(s.routineName)}</div>
+      <div style="font-size:12px;color:var(--t2)">${fmtDateFull(s.date)}</div>
+    </div><div style="text-align:right">
+      <div class="mono" style="font-size:15px;font-weight:800;color:var(--al)">${volDisplay(vol)} lbs</div>
+      <div style="font-size:11px;color:var(--t2)">${fmtTime(s.duration)} · ${s.completedSets}/${s.totalSets} sets</div>
+    </div></div>`;
+    if(s.logs){h+=`<div style="border-top:1px solid var(--b);padding-top:8px;margin-top:4px">`;
+      s.logs.forEach(l=>{const ex=getEx(l.exerciseId);const ds=l.sets.filter(x=>x.done);
+        if(ds.length)h+=`<div style="font-size:12px;color:var(--t2);padding:2px 0"><span style="color:var(--t);font-weight:600">${esc(l.name||ex.name)}</span>: ${ds.map(x=>(x.weight||0)+'×'+(x.reps||0)).join(', ')}</div>`;
+      });h+='</div>'}
+    h+='</div>';
+  });
+  h+='</div>';
+  document.getElementById('screen-log').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: COACH
+// ═══════════════════════════════════════════════════════════════
+function renderCoach(){
+  const hasKey=!!state.apiKey;
+  let h=`<div style="display:flex;flex-direction:column;height:100%">
+    <div class="top-bar" style="flex-shrink:0"><div class="h1">AI Coach</div>
+      <div style="font-size:12px;color:var(--t2)">${hasKey?'Routine-level coaching':'Add API key in Config to enable'}</div>
     </div>
-  </header>
+    <div style="padding:0 16px 8px;flex-shrink:0"><div class="row" style="gap:6px;overflow-x:auto">
+      <button class="btn-sm" style="${!state.coachRoutineId?'background:var(--a);color:#fff':''}" onclick="state.coachRoutineId=null;renderCoach()">General</button>`;
+  state.routines.forEach(r=>{h+=`<button class="btn-sm" style="white-space:nowrap;${state.coachRoutineId===r.id?'background:'+r.color+';color:#fff':''}" onclick="state.coachRoutineId='${r.id}';renderCoach()">${esc(r.name)}</button>`});
+  h+=`</div></div><div id="coachScroll" style="flex:1;overflow-y:auto;padding:0 16px">`;
 
-  <!-- MAIN -->
-  <div class="main">
+  if(!state.coachMessages.length){
+    h+=`<div style="text-align:center;padding:32px 16px"><div style="font-size:32px;margin-bottom:12px">🏋️</div>
+      <div class="h2" style="margin-bottom:8px">What can I help with?</div>
+      <div class="muted" style="margin-bottom:16px">I coach on full routines — programming, progression, exercise swaps.</div>`;
+    ["Build me a 4-day upper/lower split","How should I progress my Push Day?","Review my routine balance","I have 30 min — quick routine?"].forEach(q=>{
+      h+=`<div class="card" style="text-align:left;cursor:pointer;font-size:13px;color:var(--al);padding:12px;border:1px solid rgba(58,122,82,.2)" onclick="sendCoachMsg('${esc(q)}')">${esc(q)}</div>`;
+    });
+    h+='</div>';
+  }
 
-    <!-- LEFT: VIDEO -->
-    <div class="left-col">
+  state.coachMessages.forEach(m=>{
+    h+=`<div style="margin-bottom:12px;display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'}">
+      <div class="chat-bubble ${m.role==='user'?'chat-user':'chat-assistant'}">${esc(m.display||m.content)}</div></div>`;
+    if(m.parsed){const p=m.parsed;
+      h+=`<div style="margin:0 0 12px 8px"><div class="card" style="padding:12px;border-left:3px solid ${p.color||'var(--a)'}">
+        <div class="h3" style="color:${p.color||'var(--al)'}">${esc(p.name)}</div>`;
+      (p.exercises||[]).forEach(e=>{h+=`<div style="font-size:12px;color:var(--t2);padding:2px 0"><span style="color:var(--t)">${esc(e.name)}</span> — ${e.sets}×${e.reps}</div>`});
+      h+=`<button class="btn-sm" style="margin-top:8px;background:var(--a);color:#fff" onclick='importParsedRoutine(${JSON.stringify(p).replace(/'/g,"&#39;")})'>+ Add to My Routines</button></div></div>`;
+    }
+  });
 
-      <!-- DROP ZONE -->
-      <div id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <svg class="dz-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="6" y="12" width="60" height="48" rx="4"/>
-          <rect x="16" y="20" width="16" height="12" rx="2"/>
-          <rect x="40" y="20" width="16" height="12" rx="2"/>
-          <line x1="6" y1="40" x2="66" y2="40"/>
-          <circle cx="22" cy="52" r="5"/>
-          <circle cx="50" cy="52" r="5"/>
-          <line x1="27" y1="52" x2="45" y2="52"/>
-        </svg>
-        <div class="dz-title">DROP TAPE FOOTAGE HERE</div>
-        <div class="dz-sub">or click to browse — MP4, MOV, AVI, MKV, MPG, WMV accepted</div>
-        <div class="dz-formats">
-          <span class="dz-fmt">MP4</span><span class="dz-fmt">MOV</span><span class="dz-fmt">AVI</span>
-          <span class="dz-fmt">MKV</span><span class="dz-fmt">MPG</span><span class="dz-fmt">WMV</span>
-          <span class="dz-fmt">M4V</span><span class="dz-fmt">TS</span>
-        </div>
-      </div>
-      <input type="file" id="file-input" accept="video/*,.avi,.mkv,.ts,.wmv,.mpg,.mpeg">
-
-      <!-- UPLOAD PROGRESS -->
-      <div id="upload-progress">
-        <div class="up-pct" id="up-pct">0%</div>
-        <div class="up-name" id="up-name">Uploading...</div>
-        <div class="up-bar"><div class="up-fill" id="up-fill"></div></div>
-      </div>
-
-      <!-- PLAYER -->
-      <div id="player-wrap">
-
-        <div class="video-container" id="vid-container">
-          <video id="vid" preload="metadata"></video>
-          <div class="play-overlay" id="play-overlay">
-            <div class="play-circle">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- TRANSPORT -->
-        <div class="transport">
-          <div class="tc" id="tc-current">00:00:00</div>
-
-          <div class="transport-btns">
-            <button class="tbtn" onclick="skipBy(-10)" title="Back 10s">← 10s</button>
-            <button class="tbtn tbtn-play" id="play-btn" onclick="togglePlay()">▶</button>
-            <button class="tbtn" onclick="skipBy(10)" title="Forward 10s">10s →</button>
-            <button class="tbtn" onclick="skipBy(-1)" title="Back 1 frame">‹ 1s</button>
-            <button class="tbtn" onclick="skipBy(1)" title="Forward 1 frame">1s ›</button>
-          </div>
-
-          <button class="tbtn tbtn-cut" onclick="addCutHere()" title="Add cut at playhead (C)">
-            ✂ CUT HERE
-          </button>
-
-          <select class="speed-select" id="speed-sel" onchange="setSpeed(this.value)" title="Playback speed">
-            <option value="0.25">0.25×</option>
-            <option value="0.5">0.5×</option>
-            <option value="1" selected>1×</option>
-            <option value="1.5">1.5×</option>
-            <option value="2">2×</option>
-            <option value="3">3×</option>
-          </select>
-
-          <input type="range" class="vol-slider" id="vol-slider"
-                 min="0" max="1" step="0.05" value="1"
-                 onchange="document.getElementById('vid').volume = this.value"
-                 title="Volume">
-
-          <div class="tc" id="tc-duration" style="color:var(--text-dim)">00:00:00</div>
-        </div>
-
-        <!-- TIMELINE -->
-        <div class="timeline-wrap">
-          <div class="timeline-label">TIMELINE — click to scrub · C to cut</div>
-          <div id="timeline">
-            <div id="playhead"></div>
-            <div id="tl-hover-tc"></div>
-            <!-- segment fills, markers injected by JS -->
-          </div>
-          <div class="kbd-hints">
-            <div class="kbd-hint"><kbd>Space</kbd> Play/Pause</div>
-            <div class="kbd-hint"><kbd>C</kbd> Cut here</div>
-            <div class="kbd-hint"><kbd>←</kbd><kbd>→</kbd> ±1s</div>
-            <div class="kbd-hint"><kbd>J</kbd><kbd>L</kbd> ±10s</div>
-            <div class="kbd-hint"><kbd>0–9</kbd> Jump %</div>
-          </div>
-        </div>
-
-      </div><!-- player-wrap -->
-    </div><!-- left-col -->
-
-    <!-- RIGHT: SEGMENTS -->
-    <div class="right-col">
-
-      <div class="panel-header">
-        <div class="panel-title">
-          SEGMENTS
-          <span class="seg-badge" id="seg-badge">0</span>
-        </div>
-        <button class="btn" style="font-size:10px;padding:5px 10px" onclick="addCutHere()">✂ CUT</button>
-      </div>
-
-      <div class="segments-scroll" id="segments-scroll">
-        <div class="seg-empty" id="seg-empty">
-          <div class="seg-empty-icon">✂</div>
-          Load a video, then press<br>
-          <kbd>C</kbd> or click <strong>CUT HERE</strong><br>
-          at each transition point.<br><br>
-          Segments form automatically<br>
-          between your cut points.
-        </div>
-      </div>
-
-      <div class="export-footer">
-        <div id="export-status"></div>
-        <div id="export-results"></div>
-        <div class="export-row">
-          <button class="btn btn-clear" onclick="clearAllCuts()" title="Remove all cuts">CLEAR</button>
-          <button class="btn btn-export" id="btn-export" disabled onclick="exportAll()">EXPORT SELECTED</button>
-        </div>
-        <button class="btn" id="btn-finder" style="display:none;text-align:center" onclick="openFinder()">
-          📁 OPEN IN FINDER
+  if(window._coachLoading)h+=`<div class="loading-dots"><span></span><span></span><span></span></div>`;
+  h+=`<div id="coachEnd"></div></div>
+    <div style="padding:8px 16px;border-top:1px solid var(--b);background:var(--bg);flex-shrink:0">
+      <div style="display:flex;gap:8px">
+        <input id="coachInput" placeholder="${state.coachRoutineId?'Coach me on '+esc(getRt(state.coachRoutineId)?.name||'')+'...':'Ask about routines...'}" ${hasKey?'':'disabled'} onkeydown="if(event.key==='Enter')sendCoachMsg()" style="flex:1">
+        <button class="btn" style="width:44px;padding:0;display:flex;align-items:center;justify-content:center" onclick="sendCoachMsg()" ${hasKey?'':'disabled'}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
         </button>
       </div>
-
-    </div><!-- right-col -->
-  </div><!-- main -->
-</div><!-- shell -->
-
-<div id="toast"></div>
-
-<script>
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let jobId     = null;
-let duration  = 0;
-let cutPoints = [];   // sorted array of cut times in seconds
-let segments  = [];   // built from cutPoints
-let isTurbo   = false;
-let dragging  = false;
-
-const vid       = document.getElementById('vid');
-const timeline  = document.getElementById('timeline');
-const playhead  = document.getElementById('playhead');
-const playBtn   = document.getElementById('play-btn');
-const tcCurrent = document.getElementById('tc-current');
-const tcDur     = document.getElementById('tc-duration');
-const hoverTc   = document.getElementById('tl-hover-tc');
-
-// ── TURBO ─────────────────────────────────────────────────────────────────────
-document.getElementById('turbo-toggle').addEventListener('change', e => {
-  isTurbo = e.target.checked;
-  document.getElementById('turbo-lbl').classList.toggle('on', isTurbo);
-  toast(isTurbo ? 'TURBO ON — stream copy, instant export' : 'TURBO OFF — quality re-encode', isTurbo ? 'amber' : 'green');
-});
-
-// ── DRAG & DROP ───────────────────────────────────────────────────────────────
-// Block browser from opening dropped files in a new window
-document.addEventListener('dragover',  e => e.preventDefault());
-document.addEventListener('drop',      e => e.preventDefault());
-
-const dropZone = document.getElementById('drop-zone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('over'); });
-dropZone.addEventListener('dragleave', e => { e.stopPropagation(); dropZone.classList.remove('over'); });
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('over');
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-});
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) handleFile(e.target.files[0]);
-});
-
-// ── FILE UPLOAD ───────────────────────────────────────────────────────────────
-async function handleFile(file) {
-  show('upload-progress');
-  document.getElementById('up-name').textContent = file.name;
-
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/upload');
-
-  xhr.upload.onprogress = e => {
-    if (e.lengthComputable) {
-      const pct = Math.round(e.loaded / e.total * 100);
-      document.getElementById('up-fill').style.width = pct + '%';
-      document.getElementById('up-pct').textContent  = pct + '%';
-    }
-  };
-
-  xhr.onload = () => {
-    if (xhr.status === 200) {
-      const data = JSON.parse(xhr.responseText);
-      jobId    = data.job_id;
-      duration = data.duration;
-      initPlayer();
-    } else {
-      toast('Upload failed', 'red');
-      show('drop-zone');
-    }
-  };
-
-  xhr.onerror = () => { toast('Network error', 'red'); show('drop-zone'); };
-  xhr.send(formData);
+    </div></div>`;
+  document.getElementById('screen-coach').innerHTML=h;
+  const sc=document.getElementById('coachScroll');if(sc)sc.scrollTop=sc.scrollHeight;
 }
 
-function initPlayer() {
-  vid.src = `/video/${jobId}`;
-  vid.load();
+// ═══════════════════════════════════════════════════════════════
+// RENDER: CONFIG
+// ═══════════════════════════════════════════════════════════════
+let cfgSection='profile';
+function renderConfig(){
+  const hasKey=!!state.apiKey;
+  let h=`<div class="top-bar"><div class="h1">Config</div></div><div style="padding:0 16px 20px">
+    <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto">
+      ${['ai','profile','exercises','data'].map(s=>`<button class="btn-sm" style="${cfgSection===s?'background:var(--a);color:#fff':''};white-space:nowrap" onclick="cfgSection='${s}';renderConfig()">${s==='ai'?'AI Settings':s==='exercises'?'Exercises':s.charAt(0).toUpperCase()+s.slice(1)}</button>`).join('')}
+    </div>`;
 
-  vid.addEventListener('loadedmetadata', () => {
-    duration = vid.duration;
-    tcDur.textContent = fmtTC(duration);
-    buildTimeTicks();
-    resetCuts();
-  }, { once: true });
-
-  vid.addEventListener('timeupdate', onTimeUpdate);
-  vid.addEventListener('click', togglePlay);
-
-  show('player-wrap');
-  document.getElementById('btn-export').disabled = false;
-  toast('Video loaded — press C to mark cut points', 'green');
-}
-
-// ── VIDEO CONTROLS ────────────────────────────────────────────────────────────
-function togglePlay() {
-  if (vid.paused) {
-    vid.play();
-    playBtn.textContent = '⏸';
-    showPlayOverlay(false);
-  } else {
-    vid.pause();
-    playBtn.textContent = '▶';
-    showPlayOverlay(true);
-  }
-}
-
-function showPlayOverlay(show_) {
-  const o = document.getElementById('play-overlay');
-  o.classList.toggle('show', show_);
-  if (show_) setTimeout(() => o.classList.remove('show'), 800);
-}
-
-function skipBy(sec) {
-  vid.currentTime = Math.max(0, Math.min(duration, vid.currentTime + sec));
-}
-
-function setSpeed(val) { vid.playbackRate = parseFloat(val); }
-
-function onTimeUpdate() {
-  const t = vid.currentTime;
-  tcCurrent.textContent = fmtTC(t);
-  if (duration > 0) {
-    playhead.style.left = (t / duration * 100) + '%';
-  }
-}
-
-// ── KEYBOARD SHORTCUTS ────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (!jobId) return;
-  // Don't fire when typing in an input
-  if (e.target.tagName === 'INPUT') return;
-
-  switch(e.key) {
-    case ' ':       e.preventDefault(); togglePlay(); break;
-    case 'c': case 'C': addCutHere(); break;
-    case 'ArrowLeft':  e.preventDefault(); skipBy(e.shiftKey ? -10 : -1); break;
-    case 'ArrowRight': e.preventDefault(); skipBy(e.shiftKey ? 10 : 1); break;
-    case 'j': case 'J': skipBy(-10); break;
-    case 'l': case 'L': skipBy(10); break;
-    case '0': vid.currentTime = 0; break;
-    case '1': vid.currentTime = duration * 0.1; break;
-    case '2': vid.currentTime = duration * 0.2; break;
-    case '3': vid.currentTime = duration * 0.3; break;
-    case '4': vid.currentTime = duration * 0.4; break;
-    case '5': vid.currentTime = duration * 0.5; break;
-    case '6': vid.currentTime = duration * 0.6; break;
-    case '7': vid.currentTime = duration * 0.7; break;
-    case '8': vid.currentTime = duration * 0.8; break;
-    case '9': vid.currentTime = duration * 0.9; break;
-  }
-});
-
-// ── TIMELINE INTERACTION ──────────────────────────────────────────────────────
-timeline.addEventListener('mousedown', e => {
-  dragging = true;
-  scrubTo(e);
-});
-timeline.addEventListener('mousemove', e => {
-  // Show hover timecode
-  const rect  = timeline.getBoundingClientRect();
-  const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  const t     = pct * duration;
-  hoverTc.textContent = fmtTC(t);
-  hoverTc.style.left  = Math.min(pct * 100, 90) + '%';
-  hoverTc.style.opacity = '1';
-  if (dragging) scrubTo(e);
-});
-timeline.addEventListener('mouseleave', () => { hoverTc.style.opacity = '0'; dragging = false; });
-document.addEventListener('mouseup', () => { dragging = false; });
-
-function scrubTo(e) {
-  const rect = timeline.getBoundingClientRect();
-  const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-  vid.currentTime = pct * duration;
-}
-
-// ── CUT POINTS ────────────────────────────────────────────────────────────────
-function addCutHere() {
-  if (!jobId || duration === 0) return;
-  const t = vid.currentTime;
-
-  // Don't add if too close to existing cut or to 0/end
-  if (t < 1 || t > duration - 1) { toast('Too close to edge', 'amber'); return; }
-  if (cutPoints.some(c => Math.abs(c - t) < 1.0)) { toast('Cut already near here', 'amber'); return; }
-
-  cutPoints.push(t);
-  cutPoints.sort((a, b) => a - b);
-
-  rebuildSegments();
-  renderTimeline();
-  renderSegments();
-  toast(`Cut at ${fmtTC(t)}`, 'green');
-}
-
-function removeCut(index) {
-  cutPoints.splice(index, 1);
-  rebuildSegments();
-  renderTimeline();
-  renderSegments();
-}
-
-function clearAllCuts() {
-  cutPoints = [];
-  rebuildSegments();
-  renderTimeline();
-  renderSegments();
-  document.getElementById('export-results').style.display = 'none';
-  document.getElementById('btn-finder').style.display = 'none';
-  toast('All cuts cleared', 'amber');
-}
-
-function resetCuts() {
-  cutPoints = [];
-  segments  = [];
-  renderTimeline();
-  renderSegments();
-}
-
-function rebuildSegments() {
-  const boundaries = [0, ...cutPoints, duration];
-  segments = [];
-  for (let i = 0; i < boundaries.length - 1; i++) {
-    const start = boundaries[i];
-    const end   = boundaries[i + 1];
-    const existing = segments[i] || {};
-    segments.push({
-      id:       `seg_${i}`,
-      index:    i,
-      start:    start,
-      end:      end,
-      duration: end - start,
-      name:     existing.name || `Segment ${String(i+1).padStart(2,'0')}`,
-      selected: existing.selected !== undefined ? existing.selected : true
-    });
-  }
-}
-
-// ── RENDER TIMELINE ───────────────────────────────────────────────────────────
-function buildTimeTicks() {
-  // Remove old ticks
-  timeline.querySelectorAll('.tl-tick, .tl-tick-label').forEach(el => el.remove());
-
-  // Decide tick interval
-  const mins = duration / 60;
-  const interval = mins < 5 ? 30 : mins < 20 ? 60 : mins < 60 ? 300 : 600;
-
-  for (let t = 0; t <= duration; t += interval) {
-    const pct  = t / duration * 100;
-    const tick = document.createElement('div');
-    tick.className = 'tl-tick';
-    tick.style.left   = pct + '%';
-    tick.style.height = '100%';
-    timeline.appendChild(tick);
-
-    if (t > 0 && pct < 98) {
-      const lbl = document.createElement('div');
-      lbl.className   = 'tl-tick-label';
-      lbl.style.left  = pct + '%';
-      lbl.textContent = fmtTC(t);
-      timeline.appendChild(lbl);
-    }
-  }
-}
-
-function renderTimeline() {
-  // Remove old segment fills and cut markers
-  timeline.querySelectorAll('.tl-segment, .tl-marker').forEach(el => el.remove());
-
-  if (duration === 0) return;
-
-  // Draw segment fills
-  const boundaries = [0, ...cutPoints, duration];
-  for (let i = 0; i < boundaries.length - 1; i++) {
-    const left  = boundaries[i] / duration * 100;
-    const width = (boundaries[i+1] - boundaries[i]) / duration * 100;
-    const fill  = document.createElement('div');
-    fill.className   = 'tl-segment';
-    fill.style.left  = left + '%';
-    fill.style.width = width + '%';
-
-    // Click segment fill to jump to its start
-    const startT = boundaries[i];
-    fill.addEventListener('click', e => {
-      e.stopPropagation();
-      vid.currentTime = startT + 0.5;
-    });
-    timeline.appendChild(fill);
-  }
-
-  // Draw cut markers
-  cutPoints.forEach((t, idx) => {
-    const m = document.createElement('div');
-    m.className  = 'tl-marker cut';
-    m.style.left = (t / duration * 100) + '%';
-    m.title      = `Cut ${idx+1}: ${fmtTC(t)} — right-click to remove`;
-    m.addEventListener('contextmenu', e => { e.preventDefault(); removeCut(idx); });
-    timeline.appendChild(m);
-  });
-}
-
-// ── RENDER SEGMENT CARDS ──────────────────────────────────────────────────────
-function renderSegments() {
-  const container = document.getElementById('segments-scroll');
-  const empty     = document.getElementById('seg-empty');
-  const badge     = document.getElementById('seg-badge');
-  const exportBtn = document.getElementById('btn-export');
-
-  badge.textContent = segments.length;
-
-  if (segments.length === 0) {
-    empty.style.display = 'block';
-    exportBtn.disabled  = true;
-    container.querySelectorAll('.seg-card').forEach(el => el.remove());
-    return;
-  }
-
-  empty.style.display = 'none';
-  exportBtn.disabled  = false;
-
-  // Remove old cards
-  container.querySelectorAll('.seg-card').forEach(el => el.remove());
-
-  segments.forEach((seg, i) => {
-    const card = document.createElement('div');
-    card.className = 'seg-card' + (seg.selected ? '' : ' deselected');
-    card.id = 'card-' + seg.id;
-
-    card.innerHTML = `
-      <div class="seg-card-top">
-        <div class="seg-num">${String(i+1).padStart(2,'0')}</div>
-        <div class="seg-meta">
-          <input class="seg-name-input"
-                 id="name-${seg.id}"
-                 value="${esc(seg.name)}"
-                 placeholder="Name this segment..."
-                 onblur="updateName('${seg.id}', this.value)">
-          <div class="seg-tc-row">
-            <span class="seg-tc-in">${fmtTC(seg.start)}</span>
-            <span style="color:var(--text-dim)">→</span>
-            <span class="seg-tc-out">${fmtTC(seg.end)}</span>
-            <span class="seg-dur">${fmtDur(seg.duration)}</span>
-          </div>
-        </div>
-        <div class="seg-check ${seg.selected ? 'on' : ''}"
-             onclick="toggleSelect('${seg.id}', this)"
-             title="Include in export">
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#000" stroke-width="2.5">
-            <polyline points="2,6 5,9 10,3"/>
-          </svg>
-        </div>
+  if(cfgSection==='ai'){
+    h+=`<div class="card">
+      <div class="h2">AI Settings</div>
+      <div style="font-size:12px;color:var(--t2);margin:8px 0">Your API key powers the Coach and Image Import features. It stays on your device only.</div>
+      <div style="margin-top:12px">
+        <div class="label">Anthropic API Key</div>
+        <input type="password" id="apiKeyInput" value="${esc(state.apiKey)}" placeholder="sk-ant-..." onchange="state.apiKey=this.value;save();render()">
+        <div style="margin-top:8px;font-size:11px;color:var(--t2)">Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--al)">console.anthropic.com</a></div>
       </div>
-      <div class="seg-card-actions">
-        <button class="seg-act-btn go" onclick="jumpToSeg(${i})" title="Jump to segment start">▶ GO</button>
-        <button class="seg-act-btn" onclick="previewSeg(${i})" title="Preview segment">⏯ PREVIEW</button>
-        ${i > 0 ? `<button class="seg-act-btn del" onclick="removeCutBefore(${i})" title="Merge with previous">↕ MERGE</button>` : ''}
-      </div>
-    `;
-
-    container.appendChild(card);
-  });
-}
-
-function updateName(segId, val) {
-  const seg = segments.find(s => s.id === segId);
-  if (seg) seg.name = val || seg.name;
-}
-
-function toggleSelect(segId, el) {
-  el.classList.toggle('on');
-  const seg = segments.find(s => s.id === segId);
-  if (seg) {
-    seg.selected = el.classList.contains('on');
-    const card = document.getElementById('card-' + segId);
-    if (card) card.classList.toggle('deselected', !seg.selected);
+      <div style="margin-top:12px" class="api-status ${hasKey?'api-on':'api-off'}">${hasKey?'● API key saved — AI features enabled':'○ No API key — Coach & Import disabled'}</div>
+      ${hasKey?`<button class="btn-sm btn-danger" style="margin-top:12px" onclick="state.apiKey='';save();render()">Remove API Key</button>`:''}
+    </div>`;
   }
-}
 
-function jumpToSeg(i) {
-  if (segments[i]) vid.currentTime = segments[i].start + 0.1;
-}
-
-function previewSeg(i) {
-  if (!segments[i]) return;
-  vid.currentTime = segments[i].start;
-  vid.play();
-  playBtn.textContent = '⏸';
-  // Auto-stop at segment end
-  const endTime = segments[i].end;
-  const stopCheck = () => {
-    if (vid.currentTime >= endTime - 0.2) {
-      vid.pause();
-      playBtn.textContent = '▶';
-      vid.removeEventListener('timeupdate', stopCheck);
-    }
-  };
-  vid.addEventListener('timeupdate', stopCheck);
-}
-
-function removeCutBefore(segIndex) {
-  // Remove the cut between seg (segIndex-1) and seg (segIndex)
-  if (segIndex > 0 && segIndex <= cutPoints.length) {
-    removeCut(segIndex - 1);
-    toast('Segments merged', 'green');
+  if(cfgSection==='profile'){
+    h+=`<div class="card"><div class="h2">Profile</div><div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+      <div><div class="label">Name</div><input value="${esc(state.profile.name)}" onchange="state.profile.name=this.value;save()"></div>
+      <div><div class="label">Age</div><input type="number" value="${state.profile.age}" onchange="state.profile.age=this.value;save()"></div>
+      <div><div class="label">Weight (lbs)</div><input type="number" value="${state.profile.weight}" onchange="state.profile.weight=this.value;save()"></div>
+      <div><div class="label">Height</div><input value="${esc(state.profile.height)}" onchange="state.profile.height=this.value;save()"></div>
+      <div><div class="label">Experience</div><select onchange="state.profile.experience=this.value;save()">${["Beginner","Intermediate","Advanced"].map(o=>`<option ${state.profile.experience===o?'selected':''}>${o}</option>`).join('')}</select></div>
+    </div></div>`;
   }
-}
 
-// ── EXPORT ────────────────────────────────────────────────────────────────────
-async function exportAll() {
-  if (!jobId || segments.length === 0) return;
-
-  const selected = segments.filter(s => s.selected);
-  if (selected.length === 0) { toast('No segments selected', 'amber'); return; }
-
-  const btn = document.getElementById('btn-export');
-  btn.disabled = true;
-  btn.textContent = 'EXPORTING...';
-  document.getElementById('export-status').textContent = `Exporting ${selected.length} segment${selected.length > 1 ? 's' : ''}...`;
-  document.getElementById('export-results').style.display = 'none';
-
-  try {
-    const res = await fetch(`/export/${jobId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ turbo: isTurbo, segments: segments })
+  if(cfgSection==='exercises'){
+    h+=`<div class="row" style="gap:8px;margin-bottom:12px"><input id="exSearch" placeholder="Search exercises..." oninput="renderConfig()" style="flex:1"><button class="btn-sm" onclick="openAddExercise()">+ Add</button></div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:8px">${state.exercises.length} exercises</div>`;
+    const q=(document.getElementById('exSearch')?.value||'').toLowerCase();
+    state.exercises.filter(e=>e.name.toLowerCase().includes(q)).forEach(ex=>{
+      h+=`<div class="card" style="padding:10px"><div style="font-weight:700;font-size:13px">${esc(ex.name)}</div><div style="font-size:11px;color:var(--t2)">${esc(ex.muscles.join(', '))} · ${esc(ex.equipment)}</div></div>`;
     });
-
-    const data = await res.json();
-
-    // Show results
-    const grid = document.getElementById('export-results');
-    grid.innerHTML = '';
-    grid.style.display = 'flex';
-
-    data.results.forEach(r => {
-      const item = document.createElement('div');
-      item.className = 'exp-item';
-      item.innerHTML = `
-        <div class="exp-dot ${r.success ? 'ok' : 'err'}"></div>
-        <div class="exp-name" title="${r.name}.mp4">${r.name}.mp4</div>
-        <div class="exp-size">${fmtBytes(r.size)}</div>
-      `;
-      grid.appendChild(item);
-    });
-
-    const ok  = data.success_count;
-    const tot = data.results.length;
-    document.getElementById('export-status').textContent = `✓ ${ok}/${tot} exported successfully`;
-    document.getElementById('btn-finder').style.display = 'block';
-
-    toast(`✓ ${ok} segments exported`, ok === tot ? 'green' : 'amber');
-
-  } catch (err) {
-    document.getElementById('export-status').textContent = 'Export error: ' + err.message;
-    toast('Export failed', 'red');
-  } finally {
-    btn.disabled  = false;
-    btn.textContent = 'EXPORT SELECTED';
   }
+
+  if(cfgSection==='data'){
+    h+=`<div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn" style="background:var(--c2);color:var(--t)" onclick="exportData()">Export All Data (JSON)</button>
+      <button class="btn" style="background:var(--c2);color:var(--t)" onclick="importDataFile()">Import Data (JSON)</button>
+      <div class="divider"></div>
+      <button class="btn btn-danger" onclick="resetData()">Reset to Defaults</button>
+    </div>`;
+  }
+
+  h+='</div>';
+  document.getElementById('screen-config').innerHTML=h;
 }
 
-async function openFinder() {
-  if (!jobId) return;
-  const res  = await fetch(`/open_folder/${jobId}`);
-  const data = await res.json();
-  if (data.ok) toast('Opened in Finder', 'green');
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS: SESSION
+// ═══════════════════════════════════════════════════════════════
+function startSession(routineId){
+  const rt=getRt(routineId);if(!rt)return;
+  // Reset live session state
+  ls={overrides:{},applyPrompt:null,applyTimer:null,editField:null,editVal:'',timedActive:null,timedSec:0,timedRunning:false,timedInterval:null,restActive:false,restSec:0,completedRounds:{},showLpMenu:null,swipeState:{}};
+  state.activeSession={routineId,startTime:Date.now(),logs:rt.exercises.map(re=>{
+    const ex=getEx(re.exerciseId);
+    return{
+      exerciseId:re.exerciseId,name:ex.name,notes:re.notes||'',
+      targetSets:re.sets,targetReps:re.reps,restSec:re.restSec,
+      sets:Array.from({length:re.sets},()=>({weight:'',reps:'',done:false}))
+    };
+  })};
+  state.sessionTimer=0;
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{state.sessionTimer++;const el=document.querySelector('#screen-lift .mono[style*="font-size:22px"]');if(el)el.textContent=fmtTimer(state.sessionTimer)},1000);
+  closeModal();switchTab('lift');
 }
 
-// ── UI UTILS ──────────────────────────────────────────────────────────────────
-function show(id) {
-  ['drop-zone','upload-progress','player-wrap'].forEach(i => {
-    const el = document.getElementById(i);
-    if (el) {
-      if (i === 'upload-progress') el.style.display = i === id ? 'flex' : 'none';
-      else if (i === 'player-wrap') el.style.display = i === id ? 'flex' : 'none';
-      else el.style.display = i === id ? 'flex' : 'none';
-    }
+function finishSession(){
+  if(!state.activeSession)return;
+  clearInterval(timerInterval);clearInterval(restInterval);clearInterval(ls.timedInterval);
+  const as=state.activeSession;const rt=getRt(as.routineId);
+  let completedSets=0,totalSets=0;
+  as.logs.forEach((log,exIdx)=>{
+    const type=detectType(log);
+    if(type==='timed'){const rounds=parseTimedRounds(log);if(rounds){totalSets+=rounds.length;completedSets+=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;}}
+    else{totalSets+=log.sets.length;completedSets+=log.sets.filter(s=>s.done).length;}
   });
+  state.sessions.unshift({id:uid(),routineId:as.routineId,routineName:rt?.name||'Unknown',date:new Date().toISOString(),duration:state.sessionTimer,logs:as.logs,completedSets,totalSets});
+  state.activeSession=null;state.sessionTimer=0;
+  ls={overrides:{},applyPrompt:null,applyTimer:null,editField:null,editVal:'',timedActive:null,timedSec:0,timedRunning:false,timedInterval:null,restActive:false,restSec:0,completedRounds:{},showLpMenu:null,swipeState:{}};
+  save();switchTab('dash');
 }
 
-let toastTimer;
-function toast(msg, type = 'green') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className   = `show ${type}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS: IMPORT
+// ═══════════════════════════════════════════════════════════════
+function importSingleRoutine(parsed){
+  const exs=(parsed.exercises||[]).map(e=>{
+    let exId=state.exercises.find(x=>x.name.toLowerCase()===e.name.toLowerCase())?.id;
+    if(!exId){exId=uid();state.exercises.push({id:exId,name:e.name,muscles:e.muscles||[],equipment:e.equipment||'Bodyweight',notes:e.notes||''})}
+    return{exerciseId:exId,sets:e.sets||1,reps:String(e.reps||'1'),restSec:e.restSec||60,notes:e.notes||''};
+  });
+  const newRt={id:uid(),name:parsed.name,description:parsed.description||'',color:parsed.color||'#2d5a3d',exercises:exs};
+  state.routines.push(newRt);return newRt.name;
+}
+function importParsedRoutine(p){importSingleRoutine(p);save();render();alert('✓ Added: '+p.name)}
+
+function openImportModal(){
+  if(!state.apiKey){openModal(`<div style="text-align:center;padding:24px">
+    <div style="font-size:32px;margin-bottom:12px">🔑</div>
+    <div class="h2" style="margin-bottom:8px">API Key Required</div>
+    <div class="muted" style="margin-bottom:16px">Image import uses AI to parse workouts. Add your Anthropic API key in Config → AI Settings first.</div>
+    <button class="btn" onclick="closeModal();cfgSection='ai';switchTab('config')">Go to AI Settings</button>
+  </div>`);return;}
+  openModal(`<div class="row" style="justify-content:space-between;margin-bottom:16px">
+    <div class="h1">Import Routine</div><button style="background:none;padding:8px;color:var(--t)" onclick="closeModal()">✕</button></div>
+    <div class="import-zone" style="margin-bottom:12px" onclick="document.getElementById('imgInput').click()">
+      <div style="font-size:32px;margin-bottom:4px">📸</div>
+      <div style="font-weight:700;color:var(--al)">Take Photo or Upload Image</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:4px">Works with workout graphics, multi-day programs, screenshots</div>
+      <input type="file" id="imgInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageImport(this.files[0])">
+    </div>
+    <div style="text-align:center;color:var(--t2);font-size:12px;margin:8px 0">— or —</div>
+    <div class="label">Paste routine as text</div>
+    <textarea id="importText" rows="6" placeholder="Push Day:&#10;Bench Press 4x8-10&#10;Incline DB Press 3x10-12&#10;..."></textarea>
+    <button class="btn" style="margin-top:8px" onclick="handleTextImport()">Parse Routine</button>
+    <div id="importStatus"></div>`);
 }
 
-function fmtTC(s) {
-  if (!isFinite(s)) return '00:00:00';
-  s = Math.max(0, s);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = Math.floor(s % 60);
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+async function handleImageImport(file){
+  if(!file)return;
+  const statusEl=document.getElementById('importStatus');
+  statusEl.innerHTML=`<div style="text-align:center;margin-top:16px"><div class="loading-dots"><span></span><span></span><span></span></div><div style="color:var(--al);font-weight:700;margin-top:4px">AI is reading your routine...</div></div>`;
+  try{
+    let imgData;try{imgData=await compressImage(file)}catch{imgData=await readFileB64(file)}
+    const text=await callAI(IMG_PROMPT,[{role:'user',content:[{type:'image',source:{type:'base64',media_type:imgData.type,data:imgData.b64}},{type:'text',text:'Parse every workout routine visible. Include ALL days if multiple.'}]}],4000);
+    const parsed=parseJSON(text);
+    const rts=parsed.routines||(Array.isArray(parsed)?parsed:[parsed]);
+    showImportPreview(rts);
+  }catch(e){console.error('Import:',e);statusEl.innerHTML=`<div style="text-align:center;margin-top:12px"><div style="color:var(--r);font-weight:700">Import failed</div><div style="font-size:12px;color:var(--t2);margin-top:4px">${esc(e.message)}</div></div>`}
 }
 
-function fmtDur(s) {
-  if (s >= 3600) return (s/3600).toFixed(1) + 'hr';
-  if (s >= 60)   return Math.floor(s/60) + 'm' + Math.round(s%60) + 's';
-  return Math.round(s) + 's';
+async function handleTextImport(){
+  const text=document.getElementById('importText')?.value;if(!text?.trim())return;
+  const statusEl=document.getElementById('importStatus');
+  statusEl.innerHTML='<div class="loading-dots" style="margin-top:12px"><span></span><span></span><span></span></div>';
+  try{
+    const result=await callAI(TXT_PROMPT,[{role:'user',content:'Parse every routine:\n\n'+text}],4000);
+    const parsed=parseJSON(result);
+    const rts=parsed.routines||(Array.isArray(parsed)?parsed:[parsed]);
+    showImportPreview(rts);
+  }catch(e){statusEl.innerHTML=`<div style="color:var(--r);text-align:center;margin-top:12px">${esc(e.message)}</div>`}
 }
 
-function fmtBytes(b) {
-  if (!b) return '';
-  if (b > 1e9) return (b/1e9).toFixed(1) + 'GB';
-  if (b > 1e6) return (b/1e6).toFixed(1) + 'MB';
-  return (b/1e3).toFixed(0) + 'KB';
+function showImportPreview(routines){
+  window._pendingImport=routines;
+  let h=`<div class="row" style="justify-content:space-between;margin-bottom:16px">
+    <div class="h1">Preview Import</div><button style="background:none;padding:8px;color:var(--t)" onclick="closeModal()">✕</button></div>
+    <div style="font-size:13px;color:var(--al);font-weight:700;margin-bottom:12px">${routines.length} routine${routines.length>1?'s':''} found</div>`;
+  routines.forEach((r,i)=>{
+    h+=`<div class="card" style="border-left:3px solid ${r.color||'var(--a)'};padding:12px">
+      <div class="row" style="justify-content:space-between;margin-bottom:4px">
+        <div class="h3" style="color:${r.color||'var(--al)'}">${esc(r.name||'Routine '+(i+1))}</div>
+        <span class="badge">${(r.exercises||[]).length} ex</span></div>
+      ${r.description?`<div style="font-size:12px;color:var(--t2);margin-bottom:6px">${esc(r.description)}</div>`:''}
+      <div style="max-height:150px;overflow-y:auto">`;
+    (r.exercises||[]).forEach(e=>{h+=`<div class="ex-pill" style="padding:4px 0"><div style="font-weight:600;font-size:12px">${esc(e.name)}</div><div style="font-size:11px;color:var(--t2)">${e.sets||1}×${e.reps||'?'} · ${esc((e.muscles||[]).join(', '))}</div></div>`});
+    h+='</div></div>';
+  });
+  h+=`<div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn" style="flex:1" onclick="confirmMultiImport()">Add ${routines.length} Routine${routines.length>1?'s':''}</button>
+    <button class="btn" style="flex:1;background:var(--c2);color:var(--t)" onclick="openImportModal()">Re-scan</button></div>`;
+  openModal(h);
 }
 
-function esc(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function confirmMultiImport(){
+  if(!window._pendingImport)return;
+  const names=window._pendingImport.map(r=>importSingleRoutine(r));
+  window._pendingImport=null;save();closeModal();render();
+  alert('✓ Added: '+names.join(', '));
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS: COACH
+// ═══════════════════════════════════════════════════════════════
+window._coachLoading=false;
+async function sendCoachMsg(preset){
+  const input=document.getElementById('coachInput');
+  const msg=preset||(input?input.value:'');if(!msg?.trim())return;
+  state.coachMessages.push({role:'user',content:msg,display:msg});
+  if(input)input.value='';window._coachLoading=true;renderCoach();
+  try{
+    let ctx=`User: ${state.profile.name}, ${state.profile.age}yo, ${state.profile.experience} lifter.\n`;
+    ctx+=`Routines: ${state.routines.map(r=>r.name+' ('+r.exercises.map(e=>getEx(e.exerciseId).name).join(', ')+')').join(' | ')}\n`;
+    if(state.coachRoutineId){const rt=getRt(state.coachRoutineId);if(rt){ctx+=`\nCOACHING: "${rt.name}"\n`;rt.exercises.forEach((e,i)=>{const ex=getEx(e.exerciseId);ctx+=`${i+1}. ${ex.name} ${e.sets}x${e.reps} rest ${e.restSec}s\n`})}}
+    const recent=state.sessions.slice(0,5).map(s=>`${s.routineName} ${fmtDate(s.date)}: ${s.completedSets}/${s.totalSets} sets`).join('\n');
+    if(recent)ctx+=`\nRecent:\n${recent}`;
+    const text=await callAI(`You are APEX Coach, expert AI strength coach. Coach on FULL ROUTINES. Be direct. When creating routines, include JSON in \`\`\`json...\`\`\`: {"name":...,"description":...,"color":"#hex","exercises":[{"name":...,"sets":N,"reps":"...","restSec":N,"muscles":[...],"equipment":"...","notes":"..."}]}\n\nContext:\n${ctx}`,state.coachMessages.map(m=>({role:m.role,content:m.content})));
+    const jsonMatch=text.match(/```json\s*([\s\S]*?)```/);let parsed=null;
+    if(jsonMatch){try{parsed=JSON.parse(jsonMatch[1])}catch{}}
+    const display=text.replace(/```json[\s\S]*?```/g,parsed?'[See routine below]':'');
+    state.coachMessages.push({role:'assistant',content:text,display,parsed});
+  }catch(e){state.coachMessages.push({role:'assistant',content:'Error',display:'Error: '+e.message})}
+  window._coachLoading=false;renderCoach();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODALS: VIEW / EDIT ROUTINE
+// ═══════════════════════════════════════════════════════════════
+function openViewRoutine(id){
+  const r=getRt(id);if(!r)return;
+  const muscles=[...new Set(r.exercises.flatMap(e=>getEx(e.exerciseId).muscles))];
+  let h=`<div class="row" style="justify-content:space-between;margin-bottom:12px"><div>
+    <div class="h1" style="color:${r.color}">${esc(r.name)}</div><div class="muted">${esc(r.description)}</div>
+  </div><button style="background:none;padding:8px;color:var(--t)" onclick="closeModal()">✕</button></div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${muscles.map(m=>`<span class="badge">${esc(m)}</span>`).join('')}</div>`;
+  r.exercises.forEach(re=>{const ex=getEx(re.exerciseId);
+    h+=`<div class="card" style="padding:10px"><div class="row" style="justify-content:space-between"><div>
+      <div style="font-weight:700;font-size:13px">${esc(ex.name)}</div><div style="font-size:11px;color:var(--t2)">${esc(ex.equipment)} · ${esc(ex.muscles.join(', '))}</div>
+    </div><div style="text-align:right"><div class="mono" style="font-weight:700;font-size:13px">${re.sets}×${re.reps}</div><div style="font-size:11px;color:var(--t2)">Rest ${re.restSec}s</div></div></div>
+    ${re.notes?`<div style="font-size:11px;color:var(--w);margin-top:4px">${esc(re.notes)}</div>`:''}</div>`;
+  });
+  h+=`<div style="display:flex;gap:8px;margin-top:16px">
+    <button class="btn" style="flex:2;background:${r.color}" onclick="startSession('${r.id}')">▶ Start</button>
+    <button class="btn" style="flex:1;background:var(--c2);color:var(--t)" onclick="openEditRoutine('${r.id}')">Edit</button>
+    <button class="btn" style="flex:1;background:var(--c2);color:var(--t)" onclick="closeModal();state.coachRoutineId='${r.id}';state.coachMessages=[];switchTab('coach')">Coach</button>
+  </div><button class="btn" style="margin-top:8px;background:transparent;color:var(--r);font-size:12px" onclick="deleteRoutine('${r.id}')">Delete Routine</button>`;
+  openModal(h);
+}
+
+let editorState={exercises:[],name:'',desc:'',color:'#2d5a3d',editId:null};
+function openEditRoutine(id){
+  if(id){const r=getRt(id);if(!r)return;editorState={exercises:[...r.exercises],name:r.name,desc:r.description,color:r.color,editId:r.id}}
+  else editorState={exercises:[],name:'',desc:'',color:'#2d5a3d',editId:null};
+  renderEditor();
+}
+function renderEditor(){
+  let h=`<div class="row" style="justify-content:space-between;margin-bottom:16px">
+    <div class="h1">${editorState.editId?'Edit':'New'} Routine</div><button style="background:none;padding:8px;color:var(--t)" onclick="closeModal()">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><div class="label">Name</div><input id="rtName" value="${esc(editorState.name)}" placeholder="e.g. Push Day" oninput="editorState.name=this.value"></div>
+      <div><div class="label">Description</div><input id="rtDesc" value="${esc(editorState.desc)}" oninput="editorState.desc=this.value"></div>
+      <div><div class="label">Color</div><div style="display:flex;gap:6px">${COLORS.map(c=>`<div class="color-dot ${editorState.color===c?'sel':''}" style="background:${c}" onclick="editorState.color='${c}';renderEditor()"></div>`).join('')}</div></div>
+    </div><div class="divider"></div>
+    <div class="row" style="justify-content:space-between;margin-bottom:8px"><div class="h2">Exercises (${editorState.exercises.length})</div></div>`;
+  editorState.exercises.forEach((re,i)=>{const ex=getEx(re.exerciseId);
+    h+=`<div class="card" style="padding:10px"><div class="row" style="justify-content:space-between;margin-bottom:6px">
+      <div style="font-weight:700;font-size:13px">${esc(ex.name)}</div>
+      <button style="background:none;color:var(--r);font-size:18px;padding:4px;border:none;cursor:pointer" onclick="editorState.exercises.splice(${i},1);renderEditor()">×</button></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div><div style="font-size:10px;color:var(--t2)">Sets</div><input type="number" value="${re.sets}" style="padding:6px 8px;font-size:12px" onchange="editorState.exercises[${i}].sets=parseInt(this.value)||0"></div>
+        <div><div style="font-size:10px;color:var(--t2)">Reps</div><input value="${re.reps}" style="padding:6px 8px;font-size:12px" onchange="editorState.exercises[${i}].reps=this.value"></div>
+        <div><div style="font-size:10px;color:var(--t2)">Rest</div><input type="number" value="${re.restSec}" style="padding:6px 8px;font-size:12px" onchange="editorState.exercises[${i}].restSec=parseInt(this.value)||0"></div>
+      </div></div>`;
+  });
+  h+=`<div class="card" style="padding:10px;margin-top:4px"><div style="font-size:12px;color:var(--t2);margin-bottom:4px">Add exercise:</div>`;
+  state.exercises.slice(0,12).forEach(ex=>{
+    h+=`<div class="ex-pill" style="cursor:pointer;font-size:12px" onclick="editorState.exercises.push({exerciseId:'${ex.id}',sets:3,reps:'10',restSec:90,notes:''});renderEditor()"><span style="font-weight:600">${esc(ex.name)}</span> <span style="color:var(--t2)">· ${esc(ex.muscles.join(', '))}</span></div>`;
+  });
+  h+=`</div><button class="btn" style="margin-top:16px" onclick="saveRoutine()" ${!editorState.name.trim()||!editorState.exercises.length?'disabled':''}>${editorState.editId?'Save':'Create Routine'}</button>`;
+  openModal(h);
+}
+function saveRoutine(){
+  const rt={id:editorState.editId||uid(),name:editorState.name.trim(),description:editorState.desc.trim(),color:editorState.color,exercises:editorState.exercises};
+  if(editorState.editId)state.routines=state.routines.map(r=>r.id===rt.id?rt:r);else state.routines.push(rt);
+  save();closeModal();render();
+}
+function deleteRoutine(id){if(confirm('Delete?')){state.routines=state.routines.filter(r=>r.id!==id);save();closeModal();render()}}
+
+function openAddExercise(){
+  openModal(`<div class="row" style="justify-content:space-between;margin-bottom:16px">
+    <div class="h1">Add Exercise</div><button style="background:none;padding:8px;color:var(--t)" onclick="closeModal()">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><div class="label">Name</div><input id="newExName" placeholder="Exercise name"></div>
+      <div><div class="label">Muscles</div><div id="muscleSelect" style="display:flex;flex-wrap:wrap;gap:4px">${MUSCLES.map(m=>`<button class="btn-sm" data-m="${m}" onclick="this.classList.toggle('sel');this.style.background=this.classList.contains('sel')?'var(--a)':'';this.style.color=this.classList.contains('sel')?'#fff':''">${m}</button>`).join('')}</div></div>
+      <div><div class="label">Equipment</div><select id="newExEquip">${EQUIP.map(e=>`<option>${e}</option>`).join('')}</select></div>
+    </div><button class="btn" style="margin-top:16px" onclick="saveNewExercise()">Add Exercise</button>`);
+}
+function saveNewExercise(){
+  const name=document.getElementById('newExName')?.value;if(!name?.trim())return;
+  const muscles=[...document.querySelectorAll('#muscleSelect .sel')].map(b=>b.dataset.m);
+  state.exercises.push({id:uid(),name:name.trim(),muscles,equipment:document.getElementById('newExEquip')?.value||'Bodyweight',notes:''});
+  save();closeModal();renderConfig();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function exportData(){
+  const d=JSON.stringify({exercises:state.exercises,routines:state.routines,sessions:state.sessions,profile:state.profile},null,2);
+  const b=new Blob([d],{type:'application/json'});const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=`apex-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(u);
+}
+function importDataFile(){
+  const i=document.createElement('input');i.type='file';i.accept='.json';
+  i.onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const t=await f.text();const d=JSON.parse(t);
+    if(d.exercises)state.exercises=d.exercises;if(d.routines)state.routines=d.routines;
+    if(d.sessions)state.sessions=d.sessions;if(d.profile)Object.assign(state.profile,d.profile);
+    save();render();alert('Data imported!')}catch{alert('Invalid file.')}};i.click();
+}
+function resetData(){
+  if(!confirm('Reset ALL data?'))return;
+  state.exercises=[...SEED_EX];state.routines=JSON.parse(JSON.stringify(SEED_RT));state.sessions=[];
+  state.profile={name:'Paul',age:51,weight:'',height:'',experience:'Intermediate'};save();render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════════════════════
+function render(){renderDash();renderLift();renderLog();renderCoach();renderConfig();
+  document.querySelectorAll('.tab-btn').forEach(b=>{if(b.dataset.tab==='lift')b.classList.toggle('has-session',!!state.activeSession)})}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+load();render();
 </script>
 </body>
 </html>
