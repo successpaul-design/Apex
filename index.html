@@ -417,7 +417,7 @@ function renderLift(){
   let totalDone=0,totalSets=0;
   as.logs.forEach((log,exIdx)=>{
     const type=detectType(log);
-    if(type==='timed'){const rounds=parseTimedRounds(log);if(rounds){totalSets+=rounds.length;totalDone+=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;}}
+    if(type==='timed'){const rounds=log.rounds||[];totalSets+=rounds.length;totalDone+=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;}
     else{totalSets+=log.sets.length;totalDone+=log.sets.filter(s=>s.done).length;}
   });
   const pct=totalSets?(totalDone/totalSets)*100:0;
@@ -530,12 +530,15 @@ function renderSetsCard(log,exIdx,type){
     }
     h+=`</div>`;
   }
-  h+=`<button class="ls-add-set" onclick="lsAddSet(${exIdx})">+ Add Set</button></div></div>`;
+  h+=`<div style="display:flex;gap:6px;margin-top:3px">
+    <button class="ls-add-set" style="flex:1" onclick="lsAddSet(${exIdx})">+ Add Set</button>
+    ${totalSets>1?`<button class="ls-add-set" style="flex:1;border-color:rgba(201,69,58,.2);color:rgba(201,69,58,.5)" onclick="lsRemoveSet(${exIdx})">− Remove Set</button>`:''}
+  </div></div></div>`;
   return h;
 }
 
 function renderTimedCard(log,exIdx,clr){
-  const rounds=parseTimedRounds(log)||[];
+  const rounds=log.rounds||[];
   const done=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;
   const isEdName=ls.editField===`${exIdx}:name`;
 
@@ -554,25 +557,42 @@ function renderTimedCard(log,exIdx,clr){
   h+=`</div><div class="ls-pill"><span class="ls-pill-n">${done}</span><span class="ls-pill-s">/</span><span class="ls-pill-d">${rounds.length}</span></div></div>`;
 
   h+=`<div style="padding:0 8px 8px;display:flex;flex-direction:column;gap:3px">`;
-  rounds.forEach(round=>{
+  rounds.forEach((round,rIdx)=>{
     const key=`${exIdx}-${round.id}`;
     const isDone=ls.completedRounds[key];
     const isActive=ls.timedActive===key;
     const sec=round.unit==='min'?round.duration*60:round.duration;
+    const isEdRound=ls.editField===`${exIdx}:round:${rIdx}`;
+
     h+=`<div class="ls-round" style="background:${isDone?'rgba(45,90,60,.3)':isActive?'rgba(74,124,89,.2)':'rgba(255,255,255,.03)'};border-left:3px solid ${isActive?'var(--al)':'transparent'}">
-      <div class="ls-round-cycle">R${round.cycle}</div>
-      <div style="flex:1"><span style="color:${isDone?'rgba(255,255,255,.4)':'var(--t)'};text-decoration:${isDone?'line-through':'none'};font-weight:500;font-size:14px">${round.action} ${round.duration} ${round.unit}</span></div>`;
-    if(isActive&&ls.timedRunning){
-      h+=`<span class="mono" style="color:var(--al);font-weight:700;font-size:16px" id="lsTimedDisp">${fmtTimer(ls.timedSec)}</span>
-        <button style="width:30px;height:30px;border-radius:8px;background:var(--a);border:none;color:#fff;font-weight:700;font-size:13px;cursor:pointer" onclick="lsFinishTimedRound(${exIdx},'${round.id}')">✓</button>`;
-    }else if(!isDone){
-      h+=`<button style="width:30px;height:30px;border-radius:8px;background:var(--ad);border:1px solid rgba(45,90,61,.4);color:var(--al);font-size:11px;cursor:pointer" onclick="lsStartTimed('${key}',${sec})">▶</button>
-        <button class="ls-check" onclick="lsToggleRound(${exIdx},'${round.id}')"></button>`;
+      <div class="ls-round-cycle">R${round.cycle}</div>`;
+
+    if(isEdRound){
+      h+=`<div style="flex:1;display:flex;gap:6px;align-items:center">
+        <input autofocus id="rdAct" value="${esc(ls.editVal)}" placeholder="Action" style="flex:2;padding:5px 8px;font-size:13px;background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;color:var(--t)" onkeydown="if(event.key==='Enter')lsSaveRound(${exIdx},${rIdx});if(event.key==='Escape')lsCancelEdit()">
+        <input id="rdDur" type="number" value="${round.duration}" placeholder="#" style="width:50px;padding:5px 8px;font-size:13px;text-align:center;background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;color:var(--t)" onkeydown="if(event.key==='Enter')lsSaveRound(${exIdx},${rIdx});if(event.key==='Escape')lsCancelEdit()">
+        <select id="rdUnit" style="width:55px;padding:5px 4px;font-size:12px;background:rgba(45,90,60,.3);border:1px solid var(--al);border-radius:6px;color:var(--t)"><option value="min" ${round.unit==='min'?'selected':''}>min</option><option value="sec" ${round.unit==='sec'?'selected':''}>sec</option></select>
+        <button style="width:28px;height:28px;border-radius:6px;background:var(--a);border:none;color:#fff;font-size:12px;cursor:pointer;flex-shrink:0" onclick="lsSaveRound(${exIdx},${rIdx})">✓</button>
+      </div>`;
     }else{
-      h+=`<div style="width:30px;height:30px;border-radius:8px;background:rgba(74,124,89,.3);display:flex;align-items:center;justify-content:center;color:var(--al);font-weight:700;font-size:13px">✓</div>`;
+      h+=`<div style="flex:1;cursor:pointer" onclick="lsStartRoundEdit(${exIdx},${rIdx},'${esc(round.action)}')"><span style="color:${isDone?'rgba(255,255,255,.4)':'var(--t)'};text-decoration:${isDone?'line-through':'none'};font-weight:500;font-size:14px">${esc(round.action)} ${round.duration} ${round.unit}</span></div>`;
+    }
+
+    if(!isEdRound){
+      if(isActive&&ls.timedRunning){
+        h+=`<span class="mono" style="color:var(--al);font-weight:700;font-size:16px" id="lsTimedDisp">${fmtTimer(ls.timedSec)}</span>
+          <button style="width:30px;height:30px;border-radius:8px;background:var(--a);border:none;color:#fff;font-weight:700;font-size:13px;cursor:pointer" onclick="lsFinishTimedRound(${exIdx},'${round.id}')">✓</button>`;
+      }else if(!isDone){
+        h+=`<button style="width:30px;height:30px;border-radius:8px;background:var(--ad);border:1px solid rgba(45,90,61,.4);color:var(--al);font-size:11px;cursor:pointer" onclick="lsStartTimed('${key}',${sec})">▶</button>
+          <button class="ls-check" onclick="lsToggleRound(${exIdx},'${round.id}')"></button>
+          <button style="width:24px;height:24px;border-radius:6px;background:transparent;border:1px solid rgba(201,69,58,.3);color:var(--r);font-size:12px;cursor:pointer;flex-shrink:0" onclick="lsDeleteRound(${exIdx},${rIdx})">×</button>`;
+      }else{
+        h+=`<div style="width:30px;height:30px;border-radius:8px;background:rgba(74,124,89,.3);display:flex;align-items:center;justify-content:center;color:var(--al);font-weight:700;font-size:13px">✓</div>`;
+      }
     }
     h+=`</div>`;
   });
+  h+=`<button class="ls-add-set" onclick="lsAddRound(${exIdx})">+ Add Round</button>`;
   h+=`</div></div>`;
   return h;
 }
@@ -631,13 +651,43 @@ function lsToggleRound(exIdx,roundId){
   if(ls.completedRounds[key])delete ls.completedRounds[key];
   else{
     ls.completedRounds[key]={time:Date.now()};
-    // Check all rounds done
     const log=state.activeSession.logs[exIdx];
-    const rounds=parseTimedRounds(log);
-    if(rounds&&rounds.every(r=>ls.completedRounds[`${exIdx}-${r.id}`])&&exIdx<state.activeSession.logs.length-1){
+    const rounds=log.rounds||[];
+    if(rounds.length&&rounds.every(r=>ls.completedRounds[`${exIdx}-${r.id}`])&&exIdx<state.activeSession.logs.length-1){
       setTimeout(()=>lsPromptRest(exIdx),300);
     }
   }
+  renderLift();
+}
+
+// Round editing
+function lsStartRoundEdit(exIdx,rIdx,action){ls.editField=`${exIdx}:round:${rIdx}`;ls.editVal=action;renderLift();setTimeout(()=>{const inp=document.getElementById('rdAct');if(inp){inp.focus();inp.select();}},30)}
+function lsSaveRound(exIdx,rIdx){
+  const log=state.activeSession.logs[exIdx];
+  if(!log.rounds||!log.rounds[rIdx]){lsCancelEdit();return;}
+  const actEl=document.getElementById('rdAct');
+  const durEl=document.getElementById('rdDur');
+  const unitEl=document.getElementById('rdUnit');
+  if(actEl)log.rounds[rIdx].action=actEl.value||log.rounds[rIdx].action;
+  if(durEl)log.rounds[rIdx].duration=parseInt(durEl.value)||log.rounds[rIdx].duration;
+  if(unitEl)log.rounds[rIdx].unit=unitEl.value;
+  ls.editField=null;ls.editVal='';renderLift();
+}
+function lsDeleteRound(exIdx,rIdx){
+  const log=state.activeSession.logs[exIdx];
+  if(!log.rounds||log.rounds.length<=1)return;
+  const removed=log.rounds[rIdx];
+  delete ls.completedRounds[`${exIdx}-${removed.id}`];
+  log.rounds.splice(rIdx,1);
+  renderLift();
+}
+function lsAddRound(exIdx){
+  const log=state.activeSession.logs[exIdx];
+  if(!log.rounds)log.rounds=[];
+  const last=log.rounds[log.rounds.length-1];
+  const newId=`${Date.now()}-${log.rounds.length}`;
+  const cycle=last?last.cycle:1;
+  log.rounds.push({action:last?.action||'Run',duration:last?.duration||2,unit:last?.unit||'min',id:newId,cycle});
   renderLift();
 }
 
@@ -926,11 +976,18 @@ function startSession(routineId){
   ls={overrides:{},applyPrompt:null,applyTimer:null,editField:null,editVal:'',timedActive:null,timedSec:0,timedRunning:false,timedInterval:null,restActive:false,restSec:0,completedRounds:{},showLpMenu:null,swipeState:{}};
   state.activeSession={routineId,startTime:Date.now(),logs:rt.exercises.map(re=>{
     const ex=getEx(re.exerciseId);
-    return{
+    const log={
       exerciseId:re.exerciseId,name:ex.name,notes:re.notes||'',
       targetSets:re.sets,targetReps:re.reps,restSec:re.restSec,
       sets:Array.from({length:re.sets},()=>({weight:'',reps:'',done:false}))
     };
+    // Materialize timed rounds so they become editable data
+    const type=detectType(log);
+    if(type==='timed'){
+      const parsed=parseTimedRounds(log);
+      if(parsed)log.rounds=parsed;
+    }
+    return log;
   })};
   state.sessionTimer=0;
   clearInterval(timerInterval);
@@ -945,7 +1002,7 @@ function finishSession(){
   let completedSets=0,totalSets=0;
   as.logs.forEach((log,exIdx)=>{
     const type=detectType(log);
-    if(type==='timed'){const rounds=parseTimedRounds(log);if(rounds){totalSets+=rounds.length;completedSets+=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;}}
+    if(type==='timed'){const rounds=log.rounds||[];totalSets+=rounds.length;completedSets+=rounds.filter(r=>ls.completedRounds[`${exIdx}-${r.id}`]).length;}
     else{totalSets+=log.sets.length;completedSets+=log.sets.filter(s=>s.done).length;}
   });
   state.sessions.unshift({id:uid(),routineId:as.routineId,routineName:rt?.name||'Unknown',date:new Date().toISOString(),duration:state.sessionTimer,logs:as.logs,completedSets,totalSets});
