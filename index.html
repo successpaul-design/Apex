@@ -11,6 +11,9 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>APEX</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 :root{--a:#2d5a3d;--al:#3a7a52;--ad:rgba(45,90,61,.15);--bg:#0e1117;--c1:#161b22;--c2:#1c2333;--b:#252d3a;--t:#e6edf3;--t2:#8b949e;--r:#c9453a;--w:#d4a037}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -252,10 +255,44 @@ let timerInterval=null,restInterval=null;
 // Live session state (not persisted)
 let ls={overrides:{},applyPrompt:null,applyTimer:null,editField:null,editVal:'',timedActive:null,timedSec:0,timedRunning:false,timedInterval:null,restActive:false,restSec:0,restExId:null,completedRounds:{},showLpMenu:null,swipeState:{}};
 
-function save(){
-  try{localStorage.setItem('apex-data',JSON.stringify({exercises:state.exercises,routines:state.routines,sessions:state.sessions,profile:state.profile,apiKey:state.apiKey}))}catch(e){console.warn('Save:',e)}
+// ═══════════════════════════════════════════════════════════════
+// FIREBASE INIT
+// ═══════════════════════════════════════════════════════════════
+const firebaseConfig={apiKey:"AIzaSyBlKd5P88O2EEh02di2DuaYzoJjXmkNNrs",authDomain:"apex-759af.firebaseapp.com",projectId:"apex-759af",storageBucket:"apex-759af.firebasestorage.app",messagingSenderId:"805756580941",appId:"1:805756580941:web:4b85d1b73444e7fbf79804"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const auth=firebase.auth();
+let fbUser=null,fbUnsub=null,syncStatus='offline',savePending=null;
+
+// Enable offline persistence
+db.enablePersistence({synchronizeTabs:true}).catch(e=>{console.warn('Persistence:',e.code)});
+
+// ═══════════════════════════════════════════════════════════════
+// SAVE & LOAD (localStorage + Firestore)
+// ═══════════════════════════════════════════════════════════════
+function getDataObj(){
+  return{exercises:state.exercises,routines:state.routines,sessions:state.sessions,profile:state.profile};
 }
-function load(){
+
+function saveLocal(){
+  try{localStorage.setItem('apex-data',JSON.stringify({...getDataObj(),apiKey:state.apiKey}))}catch(e){console.warn('Save:',e)}
+}
+
+function save(){
+  saveLocal();
+  if(!fbUser)return;
+  // Debounced Firestore write
+  clearTimeout(savePending);
+  syncStatus='saving';updateSyncBadge();
+  savePending=setTimeout(()=>{
+    const docRef=db.collection('users').doc(fbUser.uid);
+    docRef.set({...getDataObj(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+      .then(()=>{syncStatus='synced';updateSyncBadge()})
+      .catch(e=>{console.warn('Firestore save:',e);syncStatus='error';updateSyncBadge()});
+  },800);
+}
+
+function loadLocal(){
   try{
     const d=JSON.parse(localStorage.getItem('apex-data'));
     if(d){
@@ -267,6 +304,79 @@ function load(){
     }else{state.exercises=[...SEED_EX];state.routines=JSON.parse(JSON.stringify(SEED_RT))}
   }catch{state.exercises=[...SEED_EX];state.routines=JSON.parse(JSON.stringify(SEED_RT))}
 }
+
+function load(){loadLocal()}
+
+function loadFromCloud(data){
+  if(!data)return;
+  state.exercises=data.exercises?.length?data.exercises:[...SEED_EX];
+  state.routines=data.routines?.length?data.routines:JSON.parse(JSON.stringify(SEED_RT));
+  state.sessions=data.sessions||[];
+  if(data.profile)Object.assign(state.profile,data.profile);
+  // Keep local apiKey (not synced to cloud for security)
+  saveLocal();
+  render();
+}
+
+// Real-time listener
+function startSync(){
+  if(fbUnsub)fbUnsub();
+  if(!fbUser)return;
+  syncStatus='syncing';updateSyncBadge();
+  fbUnsub=db.collection('users').doc(fbUser.uid).onSnapshot(snap=>{
+    if(snap.exists){
+      const data=snap.data();
+      // Only update if not in an active session (avoid disrupting workout)
+      if(!state.activeSession){
+        loadFromCloud(data);
+      }
+      syncStatus='synced';
+    }else{
+      // First time — push local data to cloud
+      save();
+      syncStatus='synced';
+    }
+    updateSyncBadge();
+  },err=>{console.warn('Sync error:',err);syncStatus='error';updateSyncBadge()});
+}
+
+function stopSync(){if(fbUnsub){fbUnsub();fbUnsub=null;}}
+
+function updateSyncBadge(){
+  const el=document.getElementById('syncBadge');
+  if(!el)return;
+  const map={synced:{icon:'●',text:'Synced',cls:'api-on'},syncing:{icon:'↻',text:'Syncing...',cls:'api-on'},saving:{icon:'↑',text:'Saving...',cls:'api-on'},error:{icon:'⚠',text:'Sync Error',cls:'api-off'},offline:{icon:'○',text:'Local Only',cls:'api-off'}};
+  const s=map[syncStatus]||map.offline;
+  el.className='api-status '+s.cls;
+  el.innerHTML=`${s.icon} ${s.text}`;
+}
+
+// Auth
+async function signInGoogle(){
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  }catch(e){
+    // Popup blocked on mobile — try redirect
+    if(e.code==='auth/popup-blocked'||e.code==='auth/cancelled-popup-request'){
+      const provider=new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithRedirect(provider);
+    }else{alert('Sign-in failed: '+e.message)}
+  }
+}
+function signOut(){auth.signOut();syncStatus='offline';fbUser=null;stopSync();render()}
+
+auth.onAuthStateChanged(user=>{
+  fbUser=user;
+  if(user){
+    syncStatus='syncing';
+    startSync();
+  }else{
+    syncStatus='offline';
+    stopSync();
+  }
+  render();
+});
 
 // ═══════════════════════════════════════════════════════════════
 // AI ENGINE
@@ -340,7 +450,10 @@ function renderDash(){
 
   let h=`<div class="top-bar"><div style="display:flex;justify-content:space-between;align-items:center">
     <div><div style="font-size:13px;color:var(--t2);font-weight:500">APEX</div><div class="h1">Dashboard</div></div>
-    <div class="api-status ${hasKey?'api-on':'api-off'}">${hasKey?'● AI Ready':'○ No API Key'}</div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div class="api-status ${hasKey?'api-on':'api-off'}">${hasKey?'● AI Ready':'○ No API Key'}</div>
+      <div id="syncBadge" class="api-status ${fbUser?'api-on':'api-off'}">${fbUser?'● Synced':'○ Local Only'}</div>
+    </div>
   </div></div>
   <div style="padding:0 16px 20px">
     <div class="stat-grid">
@@ -918,8 +1031,36 @@ function renderConfig(){
   const hasKey=!!state.apiKey;
   let h=`<div class="top-bar"><div class="h1">Config</div></div><div style="padding:0 16px 20px">
     <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto">
-      ${['ai','profile','exercises','data'].map(s=>`<button class="btn-sm" style="${cfgSection===s?'background:var(--a);color:#fff':''};white-space:nowrap" onclick="cfgSection='${s}';renderConfig()">${s==='ai'?'AI Settings':s==='exercises'?'Exercises':s.charAt(0).toUpperCase()+s.slice(1)}</button>`).join('')}
+      ${['sync','ai','profile','exercises','data'].map(s=>`<button class="btn-sm" style="${cfgSection===s?'background:var(--a);color:#fff':''};white-space:nowrap" onclick="cfgSection='${s}';renderConfig()">${s==='ai'?'AI Settings':s==='exercises'?'Exercises':s==='sync'?'☁ Sync':s.charAt(0).toUpperCase()+s.slice(1)}</button>`).join('')}
     </div>`;
+
+  if(cfgSection==='sync'){
+    if(fbUser){
+      h+=`<div class="card">
+        <div class="h2">☁ Cloud Sync</div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:12px">
+          ${fbUser.photoURL?`<img src="${fbUser.photoURL}" style="width:40px;height:40px;border-radius:10px">`:
+          `<div style="width:40px;height:40px;border-radius:10px;background:var(--a);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff">${(fbUser.displayName||'U')[0]}</div>`}
+          <div><div style="font-weight:700">${esc(fbUser.displayName||'User')}</div><div style="font-size:12px;color:var(--t2)">${esc(fbUser.email||'')}</div></div>
+        </div>
+        <div style="margin-top:12px" id="syncBadgeCfg" class="api-status api-on">● ${syncStatus==='synced'?'Synced':'Syncing...'}</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:8px">Your routines, sessions, exercises, and profile sync automatically across all your devices. API key stays local for security.</div>
+        <button class="btn" style="margin-top:16px;background:var(--ad);color:var(--al)" onclick="save()">Force Sync Now</button>
+        <button class="btn-sm btn-danger" style="margin-top:8px" onclick="signOut()">Sign Out</button>
+      </div>`;
+    }else{
+      h+=`<div class="card" style="text-align:center">
+        <div style="font-size:40px;margin-bottom:8px">☁</div>
+        <div class="h2" style="margin-bottom:4px">Cloud Sync</div>
+        <div style="font-size:13px;color:var(--t2);margin-bottom:16px">Sign in with Google to sync your data across Mac, iPhone, and any browser. Your workout history, routines, and settings travel with you.</div>
+        <button class="btn" style="display:flex;align-items:center;justify-content:center;gap:8px" onclick="signInGoogle()">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Sign in with Google
+        </button>
+        <div style="font-size:11px;color:var(--t2);margin-top:12px">Data is stored in your private Firebase database. No one else can see it.</div>
+      </div>`;
+    }
+  }
 
   if(cfgSection==='ai'){
     h+=`<div class="card">
@@ -1228,12 +1369,12 @@ function resetData(){
 // RENDER ALL
 // ═══════════════════════════════════════════════════════════════
 function render(){renderDash();renderLift();renderLog();renderCoach();renderConfig();
-  document.querySelectorAll('.tab-btn').forEach(b=>{if(b.dataset.tab==='lift')b.classList.toggle('has-session',!!state.activeSession)})}
-
+  document.querySelectorAll('.tab-btn').forEach(b=>{if(b.dataset.tab==='lift')b.classList.toggle('has-session',!!state.activeSession)});
+  updateSyncBadge()}
 // ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
-load();render();
+loadLocal();render();
 </script>
 </body>
 </html>
