@@ -3,7 +3,7 @@ import RoomPlan
 import SwiftUI
 import simd
 
-class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
+class ScanViewModel: ObservableObject {
     @Published var capturedRoom: CapturedRoom?
     @Published var isScanning = false
     @Published var scanError: String?
@@ -11,12 +11,13 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
 
     let roomCaptureView = RoomCaptureView(frame: .zero)
     var scanMode: ScanMode = .singleRoom
-    private var structureBuilder: StructureBuilder?
     private var capturedRooms: [CapturedRoom] = []
+    private var delegate: ScanViewDelegate?
 
-    override init() {
-        super.init()
-        roomCaptureView.delegate = self
+    init() {
+        let del = ScanViewDelegate(viewModel: self)
+        self.delegate = del
+        roomCaptureView.delegate = del
     }
 
     func startSession() {
@@ -34,31 +35,6 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
         roomCaptureView.captureSession.stop()
     }
 
-    // MARK: - RoomCaptureViewDelegate
-
-    func captureView(shouldPresent roomDataForProcessing: CapturedRoom, error: (Error)?) -> Bool {
-        if let error = error {
-            DispatchQueue.main.async {
-                self.scanError = error.localizedDescription
-            }
-        }
-        return true
-    }
-
-    func captureView(didPresent processedResult: CapturedRoom, error: (Error)?) {
-        DispatchQueue.main.async {
-            if let error = error {
-                self.scanError = error.localizedDescription
-                return
-            }
-
-            self.capturedRoom = processedResult
-            self.capturedRooms.append(processedResult)
-            self.isScanning = false
-            self.showResults = true
-        }
-    }
-
     // MARK: - 3D to 2D Conversion
 
     func convertToFloorPlan(name: String = "Untitled Scan") -> FloorPlan? {
@@ -70,25 +46,16 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
         var doors2D: [Door2D] = []
         var windows2D: [Window2D] = []
 
-        // Convert walls
         for surface in room.walls {
-            let wall = convertSurfaceToWall2D(surface: surface, scale: pixelsPerMeter)
-            walls2D.append(wall)
+            walls2D.append(convertSurfaceToWall2D(surface: surface, scale: pixelsPerMeter))
         }
-
-        // Convert doors
         for surface in room.doors {
-            let door = convertSurfaceToDoor2D(surface: surface, scale: pixelsPerMeter)
-            doors2D.append(door)
+            doors2D.append(convertSurfaceToDoor2D(surface: surface, scale: pixelsPerMeter))
         }
-
-        // Convert windows
         for surface in room.windows {
-            let window = convertSurfaceToWindow2D(surface: surface, scale: pixelsPerMeter)
-            windows2D.append(window)
+            windows2D.append(convertSurfaceToWindow2D(surface: surface, scale: pixelsPerMeter))
         }
 
-        // Normalize coordinates so the floor plan starts near (0,0)
         let (normalizedWalls, normalizedDoors, normalizedWindows) = normalizeCoordinates(
             walls: walls2D, doors: doors2D, windows: windows2D
         )
@@ -105,25 +72,18 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
         let transform = surface.transform
         let dimensions = surface.dimensions
 
-        // Position from transform column 3 (translation)
         let posX = CGFloat(transform.columns.3.x)
         let posZ = CGFloat(transform.columns.3.z)
-
-        // Wall half-width in the local X direction
         let halfWidth = CGFloat(dimensions.x) / 2.0
-
-        // Extract rotation around Y axis from transform
         let rotY = atan2(Double(transform.columns.0.z), Double(transform.columns.0.x))
 
-        // Calculate wall endpoints in 2D (XZ plane)
         let dx = halfWidth * CGFloat(cos(rotY))
         let dz = halfWidth * CGFloat(sin(rotY))
 
         let start = CGPoint(x: (posX - dx) * scale, y: (posZ - dz) * scale)
         let end = CGPoint(x: (posX + dx) * scale, y: (posZ + dz) * scale)
-        let lengthMeters = Double(dimensions.x)
 
-        return Wall2D(start: start, end: end, thickness: 6.0, lengthMeters: lengthMeters)
+        return Wall2D(start: start, end: end, thickness: 6.0, lengthMeters: Double(dimensions.x))
     }
 
     private func convertSurfaceToDoor2D(surface: CapturedRoom.Surface, scale: CGFloat) -> Door2D {
@@ -133,9 +93,7 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
         let posX = CGFloat(transform.columns.3.x) * scale
         let posZ = CGFloat(transform.columns.3.z) * scale
         let rotY = atan2(Double(transform.columns.0.z), Double(transform.columns.0.x))
-
         let doorWidth = CGFloat(dimensions.x) * scale
-        let widthMeters = Double(dimensions.x)
 
         var isOpen = false
         if case .door(let open) = surface.category {
@@ -146,7 +104,7 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
             position: CGPoint(x: posX, y: posZ),
             width: doorWidth,
             angle: rotY,
-            widthMeters: widthMeters,
+            widthMeters: Double(dimensions.x),
             isOpen: isOpen
         )
     }
@@ -158,16 +116,15 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
         let posX = CGFloat(transform.columns.3.x)
         let posZ = CGFloat(transform.columns.3.z)
         let halfWidth = CGFloat(dimensions.x) / 2.0
-
         let rotY = atan2(Double(transform.columns.0.z), Double(transform.columns.0.x))
+
         let dx = halfWidth * CGFloat(cos(rotY))
         let dz = halfWidth * CGFloat(sin(rotY))
 
         let start = CGPoint(x: (posX - dx) * scale, y: (posZ - dz) * scale)
         let end = CGPoint(x: (posX + dx) * scale, y: (posZ + dz) * scale)
-        let widthMeters = Double(dimensions.x)
 
-        return Window2D(start: start, end: end, widthMeters: widthMeters)
+        return Window2D(start: start, end: end, widthMeters: Double(dimensions.x))
     }
 
     private func normalizeCoordinates(
@@ -192,7 +149,6 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
 
         let minX = allPoints.map(\.x).min()! - 40
         let minY = allPoints.map(\.y).min()! - 40
-
         let offset = CGPoint(x: -minX, y: -minY)
 
         let normalizedWalls = walls.map { wall in
@@ -223,5 +179,46 @@ class ScanViewModel: NSObject, ObservableObject, RoomCaptureViewDelegate {
         }
 
         return (normalizedWalls, normalizedDoors, normalizedWindows)
+    }
+}
+
+// MARK: - Separate Delegate (RoomCaptureViewDelegate requires NSCoding)
+
+class ScanViewDelegate: NSObject, RoomCaptureViewDelegate, NSCoding {
+    weak var viewModel: ScanViewModel?
+
+    init(viewModel: ScanViewModel) {
+        self.viewModel = viewModel
+        super.init()
+    }
+
+    // NSCoding conformance (required by RoomCaptureViewDelegate)
+    required init?(coder: NSCoder) {
+        super.init()
+    }
+
+    func encode(with coder: NSCoder) {}
+
+    // MARK: - RoomCaptureViewDelegate
+
+    func captureView(shouldPresent roomDataForProcessing: CapturedRoom, error: (Error)?) -> Bool {
+        if let error = error {
+            DispatchQueue.main.async {
+                self.viewModel?.scanError = error.localizedDescription
+            }
+        }
+        return true
+    }
+
+    func captureView(didPresent processedResult: CapturedRoom, error: (Error)?) {
+        DispatchQueue.main.async {
+            if let error = error {
+                self.viewModel?.scanError = error.localizedDescription
+                return
+            }
+            self.viewModel?.capturedRoom = processedResult
+            self.viewModel?.isScanning = false
+            self.viewModel?.showResults = true
+        }
     }
 }
