@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import SwiftUI
 
 class ExportService {
     static let shared = ExportService()
