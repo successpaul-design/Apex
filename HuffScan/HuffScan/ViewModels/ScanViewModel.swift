@@ -45,6 +45,7 @@ class ScanViewModel: ObservableObject {
         var walls2D: [Wall2D] = []
         var doors2D: [Door2D] = []
         var windows2D: [Window2D] = []
+        var openings2D: [Opening2D] = []
 
         for surface in room.walls {
             walls2D.append(convertSurfaceToWall2D(surface: surface, scale: pixelsPerMeter))
@@ -55,16 +56,20 @@ class ScanViewModel: ObservableObject {
         for surface in room.windows {
             windows2D.append(convertSurfaceToWindow2D(surface: surface, scale: pixelsPerMeter))
         }
+        for surface in room.openings {
+            openings2D.append(convertSurfaceToOpening2D(surface: surface, scale: pixelsPerMeter))
+        }
 
-        let (normalizedWalls, normalizedDoors, normalizedWindows) = normalizeCoordinates(
-            walls: walls2D, doors: doors2D, windows: windows2D
+        let (normalizedWalls, normalizedDoors, normalizedWindows, normalizedOpenings) = normalizeCoordinates(
+            walls: walls2D, doors: doors2D, windows: windows2D, openings: openings2D
         )
 
         return FloorPlan(
             name: name,
             walls: normalizedWalls,
             doors: normalizedDoors,
-            windows: normalizedWindows
+            windows: normalizedWindows,
+            openings: normalizedOpenings
         )
     }
 
@@ -127,11 +132,30 @@ class ScanViewModel: ObservableObject {
         return Window2D(start: start, end: end, widthMeters: Double(dimensions.x))
     }
 
+    private func convertSurfaceToOpening2D(surface: CapturedRoom.Surface, scale: CGFloat) -> Opening2D {
+        let transform = surface.transform
+        let dimensions = surface.dimensions
+
+        let posX = CGFloat(transform.columns.3.x)
+        let posZ = CGFloat(transform.columns.3.z)
+        let halfWidth = CGFloat(dimensions.x) / 2.0
+        let rotY = atan2(Double(transform.columns.0.z), Double(transform.columns.0.x))
+
+        let dx = halfWidth * CGFloat(cos(rotY))
+        let dz = halfWidth * CGFloat(sin(rotY))
+
+        let start = CGPoint(x: (posX - dx) * scale, y: (posZ - dz) * scale)
+        let end = CGPoint(x: (posX + dx) * scale, y: (posZ + dz) * scale)
+
+        return Opening2D(start: start, end: end, widthMeters: Double(dimensions.x))
+    }
+
     private func normalizeCoordinates(
         walls: [Wall2D],
         doors: [Door2D],
-        windows: [Window2D]
-    ) -> ([Wall2D], [Door2D], [Window2D]) {
+        windows: [Window2D],
+        openings: [Opening2D] = []
+    ) -> ([Wall2D], [Door2D], [Window2D], [Opening2D]) {
         var allPoints: [CGPoint] = []
         for wall in walls {
             allPoints.append(wall.start)
@@ -144,8 +168,12 @@ class ScanViewModel: ObservableObject {
             allPoints.append(window.start)
             allPoints.append(window.end)
         }
+        for opening in openings {
+            allPoints.append(opening.start)
+            allPoints.append(opening.end)
+        }
 
-        guard !allPoints.isEmpty else { return (walls, doors, windows) }
+        guard !allPoints.isEmpty else { return (walls, doors, windows, openings) }
 
         let minX = allPoints.map(\.x).min()! - 40
         let minY = allPoints.map(\.y).min()! - 40
@@ -178,7 +206,15 @@ class ScanViewModel: ObservableObject {
             )
         }
 
-        return (normalizedWalls, normalizedDoors, normalizedWindows)
+        let normalizedOpenings = openings.map { opening in
+            Opening2D(
+                start: CGPoint(x: opening.start.x + offset.x, y: opening.start.y + offset.y),
+                end: CGPoint(x: opening.end.x + offset.x, y: opening.end.y + offset.y),
+                widthMeters: opening.widthMeters
+            )
+        }
+
+        return (normalizedWalls, normalizedDoors, normalizedWindows, normalizedOpenings)
     }
 }
 

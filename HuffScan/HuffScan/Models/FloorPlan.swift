@@ -77,6 +77,20 @@ struct Window2D: Codable, Identifiable {
     }
 }
 
+struct Opening2D: Codable, Identifiable {
+    let id: UUID
+    var start: CGPoint
+    var end: CGPoint
+    var widthMeters: Double
+
+    init(start: CGPoint, end: CGPoint, widthMeters: Double) {
+        self.id = UUID()
+        self.start = start
+        self.end = end
+        self.widthMeters = widthMeters
+    }
+}
+
 // MARK: - Room Label
 
 struct RoomLabel: Codable, Identifiable {
@@ -106,6 +120,7 @@ struct FloorPlan: Codable, Identifiable, Hashable {
     var walls: [Wall2D]
     var doors: [Door2D]
     var windows: [Window2D]
+    var openings: [Opening2D]
     var roomLabels: [RoomLabel]
     var usdzFileName: String?
     var boundingRect: CGRect
@@ -115,6 +130,7 @@ struct FloorPlan: Codable, Identifiable, Hashable {
         walls: [Wall2D] = [],
         doors: [Door2D] = [],
         windows: [Window2D] = [],
+        openings: [Opening2D] = [],
         roomLabels: [RoomLabel] = []
     ) {
         self.id = UUID()
@@ -123,6 +139,7 @@ struct FloorPlan: Codable, Identifiable, Hashable {
         self.walls = walls
         self.doors = doors
         self.windows = windows
+        self.openings = openings
         self.roomLabels = roomLabels
         self.usdzFileName = nil
         self.boundingRect = Self.computeBounds(walls: walls, doors: doors, windows: windows)
