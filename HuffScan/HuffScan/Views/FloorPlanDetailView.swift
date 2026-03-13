@@ -21,7 +21,7 @@ struct FloorPlanDetailView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "#0E1117").ignoresSafeArea()
+            Color.white.ignoresSafeArea()
 
             // Floor plan with gestures
             FloorPlan2DRenderer(

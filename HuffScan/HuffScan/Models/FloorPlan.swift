@@ -91,6 +91,67 @@ struct Opening2D: Codable, Identifiable {
     }
 }
 
+// MARK: - Fixture (from CapturedRoom.Object)
+
+enum FixtureType: String, Codable {
+    case toilet
+    case bathtub
+    case sink
+    case shower
+    case stove
+    case oven
+    case refrigerator
+    case dishwasher
+    case washerDryer
+    case sofa
+    case table
+    case chair
+    case bed
+    case storage
+    case fireplace
+    case stairs
+    case television
+    case unknown
+
+    var symbolName: String {
+        switch self {
+        case .toilet: return "toilet"
+        case .bathtub: return "bathtub"
+        case .sink: return "sink"
+        case .shower: return "shower"
+        case .stove, .oven: return "stove"
+        case .refrigerator: return "fridge"
+        case .dishwasher: return "dishwasher"
+        case .washerDryer: return "washer"
+        case .sofa: return "sofa"
+        case .table: return "table"
+        case .chair: return "chair"
+        case .bed: return "bed"
+        case .storage: return "storage"
+        case .fireplace: return "fireplace"
+        case .stairs: return "stairs"
+        case .television: return "tv"
+        case .unknown: return "unknown"
+        }
+    }
+}
+
+struct Fixture2D: Codable, Identifiable {
+    let id: UUID
+    var position: CGPoint
+    var size: CGSize // width x depth in scaled units
+    var angle: Double
+    var type: FixtureType
+
+    init(position: CGPoint, size: CGSize, angle: Double, type: FixtureType) {
+        self.id = UUID()
+        self.position = position
+        self.size = size
+        self.angle = angle
+        self.type = type
+    }
+}
+
 // MARK: - Room Label
 
 struct RoomLabel: Codable, Identifiable {
@@ -121,6 +182,7 @@ struct FloorPlan: Codable, Identifiable, Hashable {
     var doors: [Door2D]
     var windows: [Window2D]
     var openings: [Opening2D]
+    var fixtures: [Fixture2D]
     var roomLabels: [RoomLabel]
     var usdzFileName: String?
     var boundingRect: CGRect
@@ -131,6 +193,7 @@ struct FloorPlan: Codable, Identifiable, Hashable {
         doors: [Door2D] = [],
         windows: [Window2D] = [],
         openings: [Opening2D] = [],
+        fixtures: [Fixture2D] = [],
         roomLabels: [RoomLabel] = []
     ) {
         self.id = UUID()
@@ -140,6 +203,7 @@ struct FloorPlan: Codable, Identifiable, Hashable {
         self.doors = doors
         self.windows = windows
         self.openings = openings
+        self.fixtures = fixtures
         self.roomLabels = roomLabels
         self.usdzFileName = nil
         self.boundingRect = Self.computeBounds(walls: walls, doors: doors, windows: windows)

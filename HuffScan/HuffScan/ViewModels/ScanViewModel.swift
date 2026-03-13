@@ -46,6 +46,7 @@ class ScanViewModel: ObservableObject {
         var doors2D: [Door2D] = []
         var windows2D: [Window2D] = []
         var openings2D: [Opening2D] = []
+        var fixtures2D: [Fixture2D] = []
 
         for surface in room.walls {
             walls2D.append(convertSurfaceToWall2D(surface: surface, scale: pixelsPerMeter))
@@ -59,9 +60,12 @@ class ScanViewModel: ObservableObject {
         for surface in room.openings {
             openings2D.append(convertSurfaceToOpening2D(surface: surface, scale: pixelsPerMeter))
         }
+        for object in room.objects {
+            fixtures2D.append(convertObjectToFixture2D(object: object, scale: pixelsPerMeter))
+        }
 
-        let (normalizedWalls, normalizedDoors, normalizedWindows, normalizedOpenings) = normalizeCoordinates(
-            walls: walls2D, doors: doors2D, windows: windows2D, openings: openings2D
+        let (normalizedWalls, normalizedDoors, normalizedWindows, normalizedOpenings, normalizedFixtures) = normalizeCoordinates(
+            walls: walls2D, doors: doors2D, windows: windows2D, openings: openings2D, fixtures: fixtures2D
         )
 
         return FloorPlan(
@@ -69,7 +73,8 @@ class ScanViewModel: ObservableObject {
             walls: normalizedWalls,
             doors: normalizedDoors,
             windows: normalizedWindows,
-            openings: normalizedOpenings
+            openings: normalizedOpenings,
+            fixtures: normalizedFixtures
         )
     }
 
@@ -150,12 +155,54 @@ class ScanViewModel: ObservableObject {
         return Opening2D(start: start, end: end, widthMeters: Double(dimensions.x))
     }
 
+    private func convertObjectToFixture2D(object: CapturedRoom.Object, scale: CGFloat) -> Fixture2D {
+        let transform = object.transform
+        let dimensions = object.dimensions
+
+        let posX = CGFloat(transform.columns.3.x) * scale
+        let posZ = CGFloat(transform.columns.3.z) * scale
+        let rotY = atan2(Double(transform.columns.0.z), Double(transform.columns.0.x))
+
+        let width = CGFloat(dimensions.x) * scale
+        let depth = CGFloat(dimensions.z) * scale
+
+        let fixtureType: FixtureType
+        switch object.category {
+        case .toilet: fixtureType = .toilet
+        case .bathtub: fixtureType = .bathtub
+        case .sink: fixtureType = .sink
+        case .shower: fixtureType = .shower
+        case .stove: fixtureType = .stove
+        case .oven: fixtureType = .oven
+        case .refrigerator: fixtureType = .refrigerator
+        case .dishwasher: fixtureType = .dishwasher
+        case .washerDryer: fixtureType = .washerDryer
+        case .sofa: fixtureType = .sofa
+        case .table: fixtureType = .table
+        case .chair: fixtureType = .chair
+        case .bed: fixtureType = .bed
+        case .storage: fixtureType = .storage
+        case .fireplace: fixtureType = .fireplace
+        case .stairs: fixtureType = .stairs
+        case .television: fixtureType = .television
+        @unknown default: fixtureType = .unknown
+        }
+
+        return Fixture2D(
+            position: CGPoint(x: posX, y: posZ),
+            size: CGSize(width: width, height: depth),
+            angle: rotY,
+            type: fixtureType
+        )
+    }
+
     private func normalizeCoordinates(
         walls: [Wall2D],
         doors: [Door2D],
         windows: [Window2D],
-        openings: [Opening2D] = []
-    ) -> ([Wall2D], [Door2D], [Window2D], [Opening2D]) {
+        openings: [Opening2D] = [],
+        fixtures: [Fixture2D] = []
+    ) -> ([Wall2D], [Door2D], [Window2D], [Opening2D], [Fixture2D]) {
         var allPoints: [CGPoint] = []
         for wall in walls {
             allPoints.append(wall.start)
@@ -173,7 +220,11 @@ class ScanViewModel: ObservableObject {
             allPoints.append(opening.end)
         }
 
-        guard !allPoints.isEmpty else { return (walls, doors, windows, openings) }
+        for fixture in fixtures {
+            allPoints.append(fixture.position)
+        }
+
+        guard !allPoints.isEmpty else { return (walls, doors, windows, openings, fixtures) }
 
         let minX = allPoints.map(\.x).min()! - 40
         let minY = allPoints.map(\.y).min()! - 40
@@ -214,7 +265,16 @@ class ScanViewModel: ObservableObject {
             )
         }
 
-        return (normalizedWalls, normalizedDoors, normalizedWindows, normalizedOpenings)
+        let normalizedFixtures = fixtures.map { fixture in
+            Fixture2D(
+                position: CGPoint(x: fixture.position.x + offset.x, y: fixture.position.y + offset.y),
+                size: fixture.size,
+                angle: fixture.angle,
+                type: fixture.type
+            )
+        }
+
+        return (normalizedWalls, normalizedDoors, normalizedWindows, normalizedOpenings, normalizedFixtures)
     }
 }
 
