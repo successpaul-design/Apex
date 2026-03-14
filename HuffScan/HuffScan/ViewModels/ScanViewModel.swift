@@ -167,24 +167,25 @@ class ScanViewModel: ObservableObject {
         let depth = CGFloat(dimensions.z) * scale
 
         let fixtureType: FixtureType
-        switch object.category {
-        case .toilet: fixtureType = .toilet
-        case .bathtub: fixtureType = .bathtub
-        case .sink: fixtureType = .sink
-        case .stove: fixtureType = .stove
-        case .oven: fixtureType = .oven
-        case .refrigerator: fixtureType = .refrigerator
-        case .dishwasher: fixtureType = .dishwasher
-        case .washer, .dryer: fixtureType = .washerDryer
-        case .sofa: fixtureType = .sofa
-        case .table: fixtureType = .table
-        case .chair: fixtureType = .chair
-        case .bed: fixtureType = .bed
-        case .storage: fixtureType = .storage
-        case .fireplace: fixtureType = .fireplace
-        case .stairs: fixtureType = .stairs
-        case .television: fixtureType = .television
-        @unknown default: fixtureType = .unknown
+        let categoryStr = String(describing: object.category)
+        switch categoryStr {
+        case "toilet": fixtureType = .toilet
+        case "bathtub": fixtureType = .bathtub
+        case "sink": fixtureType = .sink
+        case "stove": fixtureType = .stove
+        case "oven": fixtureType = .oven
+        case "refrigerator": fixtureType = .refrigerator
+        case "dishwasher": fixtureType = .dishwasher
+        case "washerDryer", "washer", "dryer": fixtureType = .washerDryer
+        case "sofa": fixtureType = .sofa
+        case "table": fixtureType = .table
+        case "chair": fixtureType = .chair
+        case "bed": fixtureType = .bed
+        case "storage": fixtureType = .storage
+        case "fireplace": fixtureType = .fireplace
+        case "stairs": fixtureType = .stairs
+        case "television": fixtureType = .television
+        default: fixtureType = .unknown
         }
 
         return Fixture2D(
