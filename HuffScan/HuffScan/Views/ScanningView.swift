@@ -93,8 +93,10 @@ struct ScanningView: View {
             TextField("e.g., First Floor", text: $planName)
             Button("Save") {
                 let name = planName.isEmpty ? "Untitled Scan" : planName
-                if let plan = viewModel.convertToFloorPlan(name: name) {
-                    onComplete(plan)
+                if let rawPlan = viewModel.convertToFloorPlan(name: name) {
+                    let optimizer = FloorPlanOptimizer()
+                    let optimizedPlan = optimizer.optimize(rawPlan)
+                    onComplete(optimizedPlan)
                 }
             }
             Button("Cancel", role: .cancel) {

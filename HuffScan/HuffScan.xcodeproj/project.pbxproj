@@ -20,6 +20,7 @@
 		A1000011000000000000000B /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011000000000000000B; };
 		A1000012000000000000000C /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012000000000000000C; };
 		A1000016000000000000000F /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016000000000000000F; };
+		A1000017000000000000001A /* FloorPlanOptimizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000017000000000000001A; };
 		A1000013000000000000000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000013000000000000000D; };
 		A10000140000000000000014 /* RoomPlan.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000140000000000000014; };
 		A10000150000000000000015 /* ARKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000150000000000000015; };
@@ -41,6 +42,7 @@
 		A2000013000000000000000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000014000000000000000E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A2000016000000000000000F /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		A2000017000000000000001A /* FloorPlanOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloorPlanOptimizer.swift; sourceTree = "<group>"; };
 		A20000140000000000000014 /* RoomPlan.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RoomPlan.framework; path = System/Library/Frameworks/RoomPlan.framework; sourceTree = SDKROOT; };
 		A20000150000000000000015 /* ARKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ARKit.framework; path = System/Library/Frameworks/ARKit.framework; sourceTree = SDKROOT; };
 		A200001F0000000000000020 /* HuffScan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HuffScan.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -118,6 +120,7 @@
 			children = (
 				A2000011000000000000000B /* StorageService.swift */,
 				A2000012000000000000000C /* ExportService.swift */,
+				A2000017000000000000001A /* FloorPlanOptimizer.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -221,6 +224,7 @@
 				A1000011000000000000000B /* StorageService.swift in Sources */,
 				A1000012000000000000000C /* ExportService.swift in Sources */,
 				A1000016000000000000000F /* AppSettings.swift in Sources */,
+				A1000017000000000000001A /* FloorPlanOptimizer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
