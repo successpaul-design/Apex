@@ -171,12 +171,11 @@ class ScanViewModel: ObservableObject {
         case .toilet: fixtureType = .toilet
         case .bathtub: fixtureType = .bathtub
         case .sink: fixtureType = .sink
-        case .shower: fixtureType = .shower
         case .stove: fixtureType = .stove
         case .oven: fixtureType = .oven
         case .refrigerator: fixtureType = .refrigerator
         case .dishwasher: fixtureType = .dishwasher
-        case .washerDryer: fixtureType = .washerDryer
+        case .washer, .dryer: fixtureType = .washerDryer
         case .sofa: fixtureType = .sofa
         case .table: fixtureType = .table
         case .chair: fixtureType = .chair

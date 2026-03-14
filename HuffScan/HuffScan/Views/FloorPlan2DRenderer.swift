@@ -327,16 +327,6 @@ struct FloorPlan2DRenderer: View {
                 style: strokeStyle
             )
 
-        case .shower:
-            // Dashed square (shower tray)
-            context.stroke(Path(rect), with: .color(fixtureColor), style: StrokeStyle(lineWidth: 1.0, dash: [4, 3]))
-            // Drain circle
-            let dr: CGFloat = 4
-            context.fill(
-                Path(ellipseIn: CGRect(x: center.x - dr, y: center.y - dr, width: dr * 2, height: dr * 2)),
-                with: .color(fixtureColor)
-            )
-
         case .stove, .oven:
             // Rectangle with 4 circles (burners)
             context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)

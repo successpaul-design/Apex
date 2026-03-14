@@ -97,7 +97,6 @@ enum FixtureType: String, Codable {
     case toilet
     case bathtub
     case sink
-    case shower
     case stove
     case oven
     case refrigerator
@@ -112,28 +111,6 @@ enum FixtureType: String, Codable {
     case stairs
     case television
     case unknown
-
-    var symbolName: String {
-        switch self {
-        case .toilet: return "toilet"
-        case .bathtub: return "bathtub"
-        case .sink: return "sink"
-        case .shower: return "shower"
-        case .stove, .oven: return "stove"
-        case .refrigerator: return "fridge"
-        case .dishwasher: return "dishwasher"
-        case .washerDryer: return "washer"
-        case .sofa: return "sofa"
-        case .table: return "table"
-        case .chair: return "chair"
-        case .bed: return "bed"
-        case .storage: return "storage"
-        case .fireplace: return "fireplace"
-        case .stairs: return "stairs"
-        case .television: return "tv"
-        case .unknown: return "unknown"
-        }
-    }
 }
 
 struct Fixture2D: Codable, Identifiable {
