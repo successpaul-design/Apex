@@ -5,26 +5,18 @@ struct FloorPlan2DRenderer: View {
     let showMeasurements: Bool
     let measurementUnit: MeasurementUnit
     let roomLabels: [RoomLabel]
+    var theme: ColorTheme = .classic
+    var wallThicknessSetting: WallThicknessSetting = .standard
+    var labelSizeSetting: LabelSizeSetting = .medium
     var onTapLocation: ((CGPoint) -> Void)?
-
-    // CubiCasa-style colors (white bg, black walls)
-    private let backgroundColor = Color.white
-    private let wallColor = Color(red: 0.1, green: 0.1, blue: 0.1)
-    private let thinWallColor = Color(red: 0.25, green: 0.25, blue: 0.25)
-    private let doorColor = Color(red: 0.3, green: 0.3, blue: 0.3)
-    private let windowColor = Color(red: 0.45, green: 0.73, blue: 1.0)
-    private let fixtureColor = Color(red: 0.35, green: 0.35, blue: 0.35)
-    private let measurementColor = Color(red: 0.4, green: 0.4, blue: 0.4)
-    private let labelColor = Color.black
-    private let dimColor = Color(red: 0.5, green: 0.5, blue: 0.5)
 
     var body: some View {
         Canvas { context, size in
             let bounds = floorPlan.boundingRect
             guard bounds.width > 0, bounds.height > 0 else { return }
 
-            // White background
-            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(backgroundColor))
+            // Background
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(theme.backgroundColor))
 
             // Scale to fit with padding
             let scaleX = size.width / bounds.width
@@ -34,24 +26,24 @@ struct FloorPlan2DRenderer: View {
             let offsetX = (size.width - bounds.width * scale) / 2 - bounds.origin.x * scale
             let offsetY = (size.height - bounds.height * scale) / 2 - bounds.origin.y * scale
 
-            // Thick architectural wall width
-            let wallThickness: CGFloat = max(10 * scale, 5.0)
+            // Wall thickness with setting multiplier
+            let wallThickness: CGFloat = max(10 * scale * wallThicknessSetting.multiplier, 5.0 * wallThicknessSetting.multiplier)
 
             func transform(_ point: CGPoint) -> CGPoint {
                 CGPoint(x: point.x * scale + offsetX, y: point.y * scale + offsetY)
             }
 
-            // 1. Draw walls as solid black filled rectangles
+            // 1. Draw walls
             for wall in floorPlan.walls {
                 let start = transform(wall.start)
                 let end = transform(wall.end)
-                drawThickWall(context: context, start: start, end: end, thickness: wallThickness, color: wallColor)
+                drawThickWall(context: context, start: start, end: end, thickness: wallThickness, color: theme.wallColor)
             }
 
-            // 2. Fill corner joints
+            // 2. Corner joints
             drawCornerJoints(context: context, walls: floorPlan.walls, scale: scale, wallThickness: wallThickness, transform: transform)
 
-            // 3. Draw openings (clear wall gap, no door)
+            // 3. Openings
             for opening in floorPlan.openings {
                 let start = transform(opening.start)
                 let end = transform(opening.end)
@@ -59,7 +51,7 @@ struct FloorPlan2DRenderer: View {
                 clearWallGap(context: context, start: start, end: end, angle: angle, wallThickness: wallThickness)
             }
 
-            // 4. Draw windows (clear wall, draw parallel lines)
+            // 4. Windows
             for window in floorPlan.windows {
                 let start = transform(window.start)
                 let end = transform(window.end)
@@ -67,7 +59,6 @@ struct FloorPlan2DRenderer: View {
 
                 clearWallGap(context: context, start: start, end: end, angle: angle, wallThickness: wallThickness)
 
-                // Two parallel lines (architectural window symbol)
                 let winOffset = wallThickness * 0.3
                 for offset in [-winOffset, winOffset] {
                     let px = -sin(angle) * offset
@@ -75,16 +66,15 @@ struct FloorPlan2DRenderer: View {
                     var linePath = Path()
                     linePath.move(to: CGPoint(x: start.x + px, y: start.y + py))
                     linePath.addLine(to: CGPoint(x: end.x + px, y: end.y + py))
-                    context.stroke(linePath, with: .color(wallColor), style: StrokeStyle(lineWidth: 1.5))
+                    context.stroke(linePath, with: .color(theme.wallColor), style: StrokeStyle(lineWidth: 1.5))
                 }
             }
 
-            // 5. Draw doors (clear wall gap + quarter arc + panel line)
+            // 5. Doors
             for door in floorPlan.doors {
                 let pos = transform(door.position)
                 let arcRadius = door.width * scale / 2
 
-                // Clear wall behind door
                 let da = door.angle
                 let dCos = cos(da) * Double(arcRadius)
                 let dSin = sin(da) * Double(arcRadius)
@@ -92,7 +82,6 @@ struct FloorPlan2DRenderer: View {
                 let e = CGPoint(x: pos.x + dCos, y: pos.y + dSin)
                 clearWallGap(context: context, start: s, end: e, angle: CGFloat(da), wallThickness: wallThickness)
 
-                // Quarter-circle arc
                 var arcPath = Path()
                 arcPath.addArc(
                     center: pos,
@@ -101,9 +90,8 @@ struct FloorPlan2DRenderer: View {
                     endAngle: Angle(radians: door.angle),
                     clockwise: false
                 )
-                context.stroke(arcPath, with: .color(doorColor), style: StrokeStyle(lineWidth: 1.0, lineCap: .round))
+                context.stroke(arcPath, with: .color(theme.doorColor), style: StrokeStyle(lineWidth: 1.0, lineCap: .round))
 
-                // Door panel line
                 let doorEnd = CGPoint(
                     x: pos.x + arcRadius * CGFloat(cos(door.angle)),
                     y: pos.y + arcRadius * CGFloat(sin(door.angle))
@@ -111,10 +99,10 @@ struct FloorPlan2DRenderer: View {
                 var doorLine = Path()
                 doorLine.move(to: pos)
                 doorLine.addLine(to: doorEnd)
-                context.stroke(doorLine, with: .color(doorColor), style: StrokeStyle(lineWidth: 2))
+                context.stroke(doorLine, with: .color(theme.doorColor), style: StrokeStyle(lineWidth: 2))
             }
 
-            // 6. Draw fixtures (toilets, sinks, tubs, etc.)
+            // 6. Fixtures
             for fixture in floorPlan.fixtures {
                 let center = transform(fixture.position)
                 let w = fixture.size.width * scale
@@ -129,19 +117,17 @@ struct FloorPlan2DRenderer: View {
                 )
             }
 
-            // 7. Draw room labels with W x H dimensions
+            // 7. Room labels
             for label in roomLabels {
                 let center = transform(label.position)
 
-                // Room name
                 context.draw(
                     Text(label.name)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(labelColor),
+                        .font(.system(size: labelSizeSetting.nameFontSize, weight: .bold))
+                        .foregroundColor(theme.labelColor),
                     at: center
                 )
 
-                // Compute room dimensions from nearby walls and show below name
                 let dims = estimateRoomDimensions(label: label, walls: floorPlan.walls)
                 if let dims = dims {
                     let dimText: String
@@ -155,14 +141,14 @@ struct FloorPlan2DRenderer: View {
                     }
                     context.draw(
                         Text(dimText)
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(dimColor),
-                        at: CGPoint(x: center.x, y: center.y + 14)
+                            .font(.system(size: labelSizeSetting.dimFontSize, weight: .medium))
+                            .foregroundColor(theme.dimColor),
+                        at: CGPoint(x: center.x, y: center.y + labelSizeSetting.dimYOffset)
                     )
                 }
             }
 
-            // 8. Wall measurements (outside walls)
+            // 8. Wall measurements
             if showMeasurements {
                 for wall in floorPlan.walls {
                     guard wall.lengthMeters > 0.3 else { continue }
@@ -180,13 +166,13 @@ struct FloorPlan2DRenderer: View {
                     context.draw(
                         Text(text)
                             .font(.system(size: 8, weight: .medium, design: .monospaced))
-                            .foregroundColor(measurementColor),
+                            .foregroundColor(theme.measurementColor),
                         at: textPoint
                     )
                 }
             }
 
-            // 9. Total area at bottom
+            // 9. Total area
             if !floorPlan.walls.isEmpty {
                 let totalArea = estimateTotalArea()
                 if totalArea > 0 {
@@ -200,21 +186,21 @@ struct FloorPlan2DRenderer: View {
                     context.draw(
                         Text(areaText)
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(dimColor),
+                            .foregroundColor(theme.dimColor),
                         at: CGPoint(x: size.width / 2, y: size.height - 24)
                     )
                 }
             }
 
-            // 10. Floor label at bottom-left
+            // 10. Floor label
             context.draw(
                 Text("Floor 1")
                     .font(.system(size: 9, weight: .regular))
-                    .foregroundColor(dimColor),
+                    .foregroundColor(theme.dimColor),
                 at: CGPoint(x: 40, y: size.height - 24)
             )
         }
-        .background(backgroundColor)
+        .background(theme.backgroundColor)
         .contentShape(Rectangle())
         .onTapGesture { location in
             onTapLocation?(location)
@@ -237,10 +223,10 @@ struct FloorPlan2DRenderer: View {
         context.fill(wallPath, with: .color(color))
     }
 
-    // MARK: - Clear Wall Gap (for doors/windows/openings)
+    // MARK: - Clear Wall Gap
 
     private func clearWallGap(context: GraphicsContext, start: CGPoint, end: CGPoint, angle: CGFloat, wallThickness: CGFloat) {
-        let expand: CGFloat = 1.5 // slight overshoot to fully clear
+        let expand: CGFloat = 1.5
         let perpX = -sin(angle) * wallThickness * expand / 2
         let perpY = cos(angle) * wallThickness * expand / 2
 
@@ -250,7 +236,7 @@ struct FloorPlan2DRenderer: View {
         clearPath.addLine(to: CGPoint(x: end.x - perpX, y: end.y - perpY))
         clearPath.addLine(to: CGPoint(x: start.x - perpX, y: start.y - perpY))
         clearPath.closeSubpath()
-        context.fill(clearPath, with: .color(backgroundColor))
+        context.fill(clearPath, with: .color(theme.backgroundColor))
     }
 
     // MARK: - Corner Joints
@@ -277,7 +263,7 @@ struct FloorPlan2DRenderer: View {
                     let half = wallThickness / 2
                     context.fill(
                         Path(CGRect(x: mid.x - half, y: mid.y - half, width: wallThickness, height: wallThickness)),
-                        with: .color(wallColor)
+                        with: .color(theme.wallColor)
                     )
                 }
             }
@@ -299,8 +285,7 @@ struct FloorPlan2DRenderer: View {
 
         switch type {
         case .toilet:
-            // Rectangle bowl + circle
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             let circleSize = min(width, height) * 0.6
             let circleRect = CGRect(
                 x: center.x - circleSize / 2,
@@ -308,28 +293,25 @@ struct FloorPlan2DRenderer: View {
                 width: circleSize,
                 height: circleSize
             )
-            context.stroke(Path(ellipseIn: circleRect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(ellipseIn: circleRect), with: .color(theme.fixtureColor), style: strokeStyle)
 
         case .bathtub:
-            // Rounded rectangle with inner rounded rect
             let outer = Path(roundedRect: rect, cornerRadius: min(width, height) * 0.2)
-            context.stroke(outer, with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(outer, with: .color(theme.fixtureColor), style: strokeStyle)
             let inner = CGRect(x: rect.minX + 3, y: rect.minY + 3, width: rect.width - 6, height: rect.height - 6)
-            context.stroke(Path(roundedRect: inner, cornerRadius: min(width, height) * 0.15), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(roundedRect: inner, cornerRadius: min(width, height) * 0.15), with: .color(theme.fixtureColor), style: strokeStyle)
 
         case .sink:
-            // Circle inside rectangle
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             let r = min(width, height) * 0.35
             context.stroke(
                 Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
-                with: .color(fixtureColor),
+                with: .color(theme.fixtureColor),
                 style: strokeStyle
             )
 
         case .stove, .oven:
-            // Rectangle with 4 circles (burners)
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             let br: CGFloat = min(width, height) * 0.15
             let offsets: [(CGFloat, CGFloat)] = [(-0.25, -0.25), (0.25, -0.25), (-0.25, 0.25), (0.25, 0.25)]
             for (ox, oy) in offsets {
@@ -337,90 +319,79 @@ struct FloorPlan2DRenderer: View {
                 let cy = center.y + height * oy
                 context.stroke(
                     Path(ellipseIn: CGRect(x: cx - br, y: cy - br, width: br * 2, height: br * 2)),
-                    with: .color(fixtureColor),
+                    with: .color(theme.fixtureColor),
                     style: strokeStyle
                 )
             }
 
         case .refrigerator:
-            // Rectangle with divider line
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             var divider = Path()
             divider.move(to: CGPoint(x: rect.minX, y: center.y - height * 0.15))
             divider.addLine(to: CGPoint(x: rect.maxX, y: center.y - height * 0.15))
-            context.stroke(divider, with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(divider, with: .color(theme.fixtureColor), style: strokeStyle)
 
         case .bed:
-            // Rectangle with pillow rectangles at top
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             let pillowH = height * 0.15
             let pillowW = width * 0.4
-            // Left pillow
             context.stroke(
                 Path(CGRect(x: center.x - width * 0.4, y: rect.minY + 3, width: pillowW, height: pillowH)),
-                with: .color(fixtureColor), style: strokeStyle
+                with: .color(theme.fixtureColor), style: strokeStyle
             )
-            // Right pillow
             context.stroke(
                 Path(CGRect(x: center.x + width * 0.0, y: rect.minY + 3, width: pillowW, height: pillowH)),
-                with: .color(fixtureColor), style: strokeStyle
+                with: .color(theme.fixtureColor), style: strokeStyle
             )
 
         case .sofa:
-            // Rectangle with back cushion
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             let backRect = CGRect(x: rect.minX + 2, y: rect.minY + 2, width: rect.width - 4, height: height * 0.25)
-            context.stroke(Path(backRect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(backRect), with: .color(theme.fixtureColor), style: strokeStyle)
 
         case .table:
-            // Simple rectangle
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
 
         case .stairs:
-            // Rectangle with parallel lines (steps)
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             let steps = 6
             for i in 1..<steps {
                 let y = rect.minY + rect.height * CGFloat(i) / CGFloat(steps)
                 var stepLine = Path()
                 stepLine.move(to: CGPoint(x: rect.minX, y: y))
                 stepLine.addLine(to: CGPoint(x: rect.maxX, y: y))
-                context.stroke(stepLine, with: .color(fixtureColor), style: strokeStyle)
+                context.stroke(stepLine, with: .color(theme.fixtureColor), style: strokeStyle)
             }
-            // Arrow
             var arrow = Path()
             arrow.move(to: CGPoint(x: center.x, y: rect.minY + 4))
             arrow.addLine(to: CGPoint(x: center.x, y: rect.maxY - 4))
-            context.stroke(arrow, with: .color(fixtureColor), style: StrokeStyle(lineWidth: 1.5))
+            context.stroke(arrow, with: .color(theme.fixtureColor), style: StrokeStyle(lineWidth: 1.5))
 
         case .fireplace:
-            // Arc + rectangle
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             var arc = Path()
             arc.addArc(center: CGPoint(x: center.x, y: rect.maxY), radius: width * 0.3,
                        startAngle: .degrees(180), endAngle: .degrees(360), clockwise: false)
-            context.stroke(arc, with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(arc, with: .color(theme.fixtureColor), style: strokeStyle)
 
         default:
-            // Generic rectangle with X
-            context.stroke(Path(rect), with: .color(fixtureColor), style: strokeStyle)
+            context.stroke(Path(rect), with: .color(theme.fixtureColor), style: strokeStyle)
             var x1 = Path()
             x1.move(to: CGPoint(x: rect.minX, y: rect.minY))
             x1.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
             var x2 = Path()
             x2.move(to: CGPoint(x: rect.maxX, y: rect.minY))
             x2.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-            context.stroke(x1, with: .color(fixtureColor), style: StrokeStyle(lineWidth: 0.5))
-            context.stroke(x2, with: .color(fixtureColor), style: StrokeStyle(lineWidth: 0.5))
+            context.stroke(x1, with: .color(theme.fixtureColor), style: StrokeStyle(lineWidth: 0.5))
+            context.stroke(x2, with: .color(theme.fixtureColor), style: StrokeStyle(lineWidth: 0.5))
         }
     }
 
     // MARK: - Room Dimensions
 
     private func estimateRoomDimensions(label: RoomLabel, walls: [Wall2D]) -> CGSize? {
-        // Find the closest walls to this label in each axis direction
         let pos = label.position
-        let searchRadius: CGFloat = 200 // search within 2m
+        let searchRadius: CGFloat = 200
 
         var horizontalLengths: [Double] = []
         var verticalLengths: [Double] = []
@@ -434,11 +405,9 @@ struct FloorPlan2DRenderer: View {
             let angle = atan2(wall.end.y - wall.start.y, wall.end.x - wall.start.x)
             let absAngle = abs(angle)
 
-            // Roughly horizontal wall
             if absAngle < 0.3 || absAngle > (.pi - 0.3) {
                 horizontalLengths.append(wall.lengthMeters)
             }
-            // Roughly vertical wall
             if abs(absAngle - .pi / 2) < 0.3 {
                 verticalLengths.append(wall.lengthMeters)
             }

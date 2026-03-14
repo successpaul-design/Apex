@@ -3,6 +3,7 @@ import SwiftUI
 struct FloorPlanDetailView: View {
     let floorPlan: FloorPlan
     @ObservedObject var viewModel: FloorPlanViewModel
+    @ObservedObject private var settings = AppSettings.shared
 
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
@@ -24,7 +25,7 @@ struct FloorPlanDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            settings.colorThemeValue.backgroundColor.ignoresSafeArea()
 
             // Floor plan with gestures
             FloorPlan2DRenderer(
@@ -32,6 +33,9 @@ struct FloorPlanDetailView: View {
                 showMeasurements: showMeasurements,
                 measurementUnit: selectedUnit,
                 roomLabels: currentPlan.roomLabels,
+                theme: settings.colorThemeValue,
+                wallThicknessSetting: settings.wallThicknessValue,
+                labelSizeSetting: settings.labelSizeValue,
                 onTapLocation: { location in
                     tapLocation = location
                     editingLabel = nil
@@ -185,35 +189,112 @@ struct FloorPlanDetailView: View {
             SettingsSheet()
                 .presentationDetents([.medium, .large])
         }
+        .onAppear {
+            showMeasurements = settings.showMeasurementsByDefault
+            selectedUnit = settings.defaultUnitValue
+        }
     }
 }
 
 // MARK: - Settings Sheet
 
 struct SettingsSheet: View {
+    @ObservedObject private var settings = AppSettings.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             List {
-                Section("Scan") {
-                    SettingsRow(icon: "viewfinder", color: .blue, title: "Scan Quality", value: "High")
-                    SettingsRow(icon: "square.dashed", color: .orange, title: "Auto-Detect Rooms", value: "On")
+                Section("Display") {
+                    // Wall Thickness
+                    Picker(selection: Binding(
+                        get: { settings.wallThicknessValue },
+                        set: { settings.wallThicknessValue = $0 }
+                    )) {
+                        ForEach(WallThicknessSetting.allCases, id: \.self) { option in
+                            Text(option.rawValue).tag(option)
+                        }
+                    } label: {
+                        Label("Wall Thickness", systemImage: "lineweight")
+                    }
+
+                    // Color Theme
+                    Picker(selection: Binding(
+                        get: { settings.colorThemeValue },
+                        set: { settings.colorThemeValue = $0 }
+                    )) {
+                        ForEach(ColorTheme.allCases, id: \.self) { option in
+                            Text(option.rawValue).tag(option)
+                        }
+                    } label: {
+                        Label("Color Theme", systemImage: "paintpalette")
+                    }
+
+                    // Label Size
+                    Picker(selection: Binding(
+                        get: { settings.labelSizeValue },
+                        set: { settings.labelSizeValue = $0 }
+                    )) {
+                        ForEach(LabelSizeSetting.allCases, id: \.self) { option in
+                            Text(option.rawValue).tag(option)
+                        }
+                    } label: {
+                        Label("Label Size", systemImage: "textformat.size")
+                    }
                 }
 
-                Section("Display") {
-                    SettingsRow(icon: "lineweight", color: .purple, title: "Wall Thickness", value: "Standard")
-                    SettingsRow(icon: "paintpalette", color: .pink, title: "Color Theme", value: "Default")
-                    SettingsRow(icon: "textformat.size", color: .teal, title: "Label Size", value: "Medium")
+                Section("Defaults") {
+                    // Default Unit
+                    Picker(selection: Binding(
+                        get: { settings.defaultUnitValue },
+                        set: { settings.defaultUnitValue = $0 }
+                    )) {
+                        ForEach(MeasurementUnit.allCases, id: \.self) { unit in
+                            Text(unit.rawValue.capitalized).tag(unit)
+                        }
+                    } label: {
+                        Label("Measurement Unit", systemImage: "ruler")
+                    }
+
+                    // Show Measurements by Default
+                    Toggle(isOn: $settings.showMeasurementsByDefault) {
+                        Label("Show Measurements", systemImage: "number")
+                    }
                 }
 
                 Section("Export") {
-                    SettingsRow(icon: "arrow.up.doc", color: .green, title: "Default Format", value: "PDF")
-                    SettingsRow(icon: "aspectratio", color: .indigo, title: "Export Resolution", value: "2x")
+                    // Default Format
+                    Picker(selection: Binding(
+                        get: { settings.defaultExportFormatValue },
+                        set: { settings.defaultExportFormatValue = $0 }
+                    )) {
+                        ForEach(ExportFormat.allCases, id: \.self) { format in
+                            Text(format.rawValue).tag(format)
+                        }
+                    } label: {
+                        Label("Default Format", systemImage: "arrow.up.doc")
+                    }
+
+                    // Export Resolution
+                    Picker(selection: Binding(
+                        get: { settings.exportResolutionValue },
+                        set: { settings.exportResolutionValue = $0 }
+                    )) {
+                        ForEach(ExportResolution.allCases, id: \.self) { res in
+                            Text(res.rawValue).tag(res)
+                        }
+                    } label: {
+                        Label("Image Resolution", systemImage: "aspectratio")
+                    }
                 }
 
                 Section("About") {
-                    SettingsRow(icon: "info.circle", color: .gray, title: "Version", value: "1.0")
+                    HStack {
+                        Label("Version", systemImage: "info.circle")
+                        Spacer()
+                        Text("1.0")
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
             .navigationTitle("Settings")
@@ -227,31 +308,13 @@ struct SettingsSheet: View {
     }
 }
 
-struct SettingsRow: View {
-    let icon: String
-    let color: Color
-    let title: String
-    let value: String
-
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .frame(width: 28)
-            Text(title)
-            Spacer()
-            Text(value)
-                .foregroundColor(.secondary)
-        }
-    }
-}
-
 // MARK: - Export Sheet
 
 struct ExportSheet: View {
     let floorPlan: FloorPlan
     let measurementUnit: MeasurementUnit
     let showMeasurements: Bool
+    @ObservedObject private var settings = AppSettings.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -272,7 +335,7 @@ struct ExportSheet: View {
 
                     ExportButton(
                         title: "Export as JPEG",
-                        subtitle: "Image format, 2x resolution",
+                        subtitle: "Image format, \(settings.exportResolutionValue.rawValue) resolution",
                         icon: "photo.fill",
                         color: .blue
                     ) {
@@ -305,7 +368,10 @@ struct ExportSheet: View {
         let data = ExportService.shared.generatePDF(
             floorPlan: floorPlan,
             unit: measurementUnit,
-            showMeasurements: showMeasurements
+            showMeasurements: showMeasurements,
+            theme: settings.colorThemeValue,
+            wallThickness: settings.wallThicknessValue,
+            labelSize: settings.labelSizeValue
         )
         shareData(data, filename: "\(floorPlan.name).pdf", mimeType: "application/pdf")
     }
@@ -314,7 +380,11 @@ struct ExportSheet: View {
         if let image = ExportService.shared.generateJPEG(
             floorPlan: floorPlan,
             unit: measurementUnit,
-            showMeasurements: showMeasurements
+            showMeasurements: showMeasurements,
+            resolution: settings.exportResolutionValue,
+            theme: settings.colorThemeValue,
+            wallThickness: settings.wallThicknessValue,
+            labelSize: settings.labelSizeValue
         ) {
             let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
             presentActivityVC(activityVC)
@@ -325,7 +395,11 @@ struct ExportSheet: View {
         if let image = ExportService.shared.generateJPEG(
             floorPlan: floorPlan,
             unit: measurementUnit,
-            showMeasurements: showMeasurements
+            showMeasurements: showMeasurements,
+            resolution: settings.exportResolutionValue,
+            theme: settings.colorThemeValue,
+            wallThickness: settings.wallThicknessValue,
+            labelSize: settings.labelSizeValue
         ) {
             UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
             dismiss()
