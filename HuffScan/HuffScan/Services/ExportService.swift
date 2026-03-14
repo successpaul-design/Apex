@@ -277,8 +277,8 @@ class ExportService {
             context.strokePath()
         }
 
-        // Fixtures
-        for fixture in floorPlan.fixtures {
+        // Fixtures (stairs only — other fixtures are excluded)
+        for fixture in floorPlan.fixtures where fixture.type == .stairs {
             let center = transform(fixture.position)
             let w = max(fixture.size.width * scale, 10)
             let h = max(fixture.size.height * scale, 10)

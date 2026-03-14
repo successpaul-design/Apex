@@ -102,8 +102,8 @@ struct FloorPlan2DRenderer: View {
                 context.stroke(doorLine, with: .color(theme.doorColor), style: StrokeStyle(lineWidth: 2))
             }
 
-            // 6. Fixtures
-            for fixture in floorPlan.fixtures {
+            // 6. Fixtures (stairs only — other fixtures are excluded)
+            for fixture in floorPlan.fixtures where fixture.type == .stairs {
                 let center = transform(fixture.position)
                 let w = fixture.size.width * scale
                 let h = fixture.size.height * scale

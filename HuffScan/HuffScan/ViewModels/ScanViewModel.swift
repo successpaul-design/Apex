@@ -60,8 +60,12 @@ class ScanViewModel: ObservableObject {
         for surface in room.openings {
             openings2D.append(convertSurfaceToOpening2D(surface: surface, scale: pixelsPerMeter))
         }
+        // Only keep stairs — filter out all other fixtures (furniture, appliances, etc.)
         for object in room.objects {
-            fixtures2D.append(convertObjectToFixture2D(object: object, scale: pixelsPerMeter))
+            let fixture = convertObjectToFixture2D(object: object, scale: pixelsPerMeter)
+            if fixture.type == .stairs {
+                fixtures2D.append(fixture)
+            }
         }
 
         let (normalizedWalls, normalizedDoors, normalizedWindows, normalizedOpenings, normalizedFixtures) = normalizeCoordinates(
@@ -183,7 +187,7 @@ class ScanViewModel: ObservableObject {
         case "bed": fixtureType = .bed
         case "storage": fixtureType = .storage
         case "fireplace": fixtureType = .fireplace
-        case "stairs": fixtureType = .stairs
+        case "stairs", "staircase": fixtureType = .stairs
         case "television": fixtureType = .television
         default: fixtureType = .unknown
         }
