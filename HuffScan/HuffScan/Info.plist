@@ -24,6 +24,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Huff Scan uses your camera and LiDAR sensor to scan rooms and create floor plans.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Huff Scan saves floor plan images to your photo library.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

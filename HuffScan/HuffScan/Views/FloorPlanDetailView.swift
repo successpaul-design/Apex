@@ -8,10 +8,13 @@ struct FloorPlanDetailView: View {
     @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
+    @State private var rotation: Angle = .zero
+    @State private var lastRotation: Angle = .zero
     @State private var showingLabelEditor = false
     @State private var tapLocation: CGPoint = .zero
     @State private var editingLabel: RoomLabel?
     @State private var showingExportSheet = false
+    @State private var showingSettings = false
     @State private var showMeasurements = true
     @State private var selectedUnit: MeasurementUnit = .feet
 
@@ -36,6 +39,7 @@ struct FloorPlanDetailView: View {
                 }
             )
             .scaleEffect(scale)
+            .rotationEffect(rotation)
             .offset(offset)
             .gesture(
                 MagnifyGesture()
@@ -45,6 +49,15 @@ struct FloorPlanDetailView: View {
                     }
                     .onEnded { _ in
                         lastScale = scale
+                    }
+            )
+            .simultaneousGesture(
+                RotationGesture()
+                    .onChanged { value in
+                        rotation = lastRotation + value
+                    }
+                    .onEnded { _ in
+                        lastRotation = rotation
                     }
             )
             .gesture(
@@ -66,20 +79,30 @@ struct FloorPlanDetailView: View {
                         lastScale = 1.0
                         offset = .zero
                         lastOffset = .zero
+                        rotation = .zero
+                        lastRotation = .zero
                     }
                 }
             )
 
-            // Zoom indicator
+            // Zoom & rotation indicator
             VStack {
                 Spacer()
-                HStack {
+                HStack(spacing: 8) {
                     Text("\(Int(scale * 100))%")
                         .font(.caption.monospaced())
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
                         .background(.ultraThinMaterial, in: Capsule())
+                    if abs(rotation.degrees) > 0.5 {
+                        Text("\(Int(rotation.degrees))°")
+                            .font(.caption.monospaced())
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(.ultraThinMaterial, in: Capsule())
+                    }
                     Spacer()
                 }
                 .padding(.horizontal)
@@ -125,6 +148,13 @@ struct FloorPlanDetailView: View {
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
+
+                // Settings
+                Button {
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                }
             }
         }
         .sheet(isPresented: $showingLabelEditor) {
@@ -150,6 +180,68 @@ struct FloorPlanDetailView: View {
                 showMeasurements: showMeasurements
             )
             .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsSheet()
+                .presentationDetents([.medium, .large])
+        }
+    }
+}
+
+// MARK: - Settings Sheet
+
+struct SettingsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Scan") {
+                    SettingsRow(icon: "viewfinder", color: .blue, title: "Scan Quality", value: "High")
+                    SettingsRow(icon: "square.dashed", color: .orange, title: "Auto-Detect Rooms", value: "On")
+                }
+
+                Section("Display") {
+                    SettingsRow(icon: "lineweight", color: .purple, title: "Wall Thickness", value: "Standard")
+                    SettingsRow(icon: "paintpalette", color: .pink, title: "Color Theme", value: "Default")
+                    SettingsRow(icon: "textformat.size", color: .teal, title: "Label Size", value: "Medium")
+                }
+
+                Section("Export") {
+                    SettingsRow(icon: "arrow.up.doc", color: .green, title: "Default Format", value: "PDF")
+                    SettingsRow(icon: "aspectratio", color: .indigo, title: "Export Resolution", value: "2x")
+                }
+
+                Section("About") {
+                    SettingsRow(icon: "info.circle", color: .gray, title: "Version", value: "1.0")
+                }
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+struct SettingsRow: View {
+    let icon: String
+    let color: Color
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .frame(width: 28)
+            Text(title)
+            Spacer()
+            Text(value)
+                .foregroundColor(.secondary)
         }
     }
 }
@@ -186,6 +278,15 @@ struct ExportSheet: View {
                     ) {
                         exportJPEG()
                     }
+
+                    ExportButton(
+                        title: "Save to Camera Roll",
+                        subtitle: "Save image to Photos",
+                        icon: "photo.on.rectangle.angled",
+                        color: .green
+                    ) {
+                        saveToCameraRoll()
+                    }
                 }
                 .padding(.horizontal)
 
@@ -217,6 +318,17 @@ struct ExportSheet: View {
         ) {
             let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
             presentActivityVC(activityVC)
+        }
+    }
+
+    private func saveToCameraRoll() {
+        if let image = ExportService.shared.generateJPEG(
+            floorPlan: floorPlan,
+            unit: measurementUnit,
+            showMeasurements: showMeasurements
+        ) {
+            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+            dismiss()
         }
     }
 
